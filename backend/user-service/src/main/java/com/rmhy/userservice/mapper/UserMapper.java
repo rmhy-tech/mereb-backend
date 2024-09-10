@@ -19,17 +19,6 @@ public class UserMapper {
         );
     }
 
-    public RegisterRequest toRegisterDto(User user) {
-        return new RegisterRequest(
-                user.getFirstName(),
-                user.getLastName(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRole()
-        );
-    }
-
     public UserResponse toDto(User user) {
         return new UserResponse(
                 user.getFirstName(),
