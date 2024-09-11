@@ -1,16 +1,15 @@
-package com.rmhy.userservice.dto.response;
+package com.rmhy.postservice.dto;
 
-import com.rmhy.userservice.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UserResponse {
+public class UserDTO {
     private Long id;
     private String firstName;
     private String lastName;
     private String username;
     private String email;
-    private Role role;
+    private String role;
 }

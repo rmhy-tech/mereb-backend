@@ -21,11 +21,11 @@ public class UserMapper {
 
     public UserResponse toDto(User user) {
         return new UserResponse(
+                user.getId(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getPassword(),
                 user.getRole()
         );
     }

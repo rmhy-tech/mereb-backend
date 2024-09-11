@@ -29,10 +29,31 @@ services:
     ports:
       - "8080:8080"                               # Expose port 8080 for the user-service
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/merebdb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092     # External Kafka server
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - kafka-network
+
+  post-service:
+    image: post-service:latest
+    container_name: post-service
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/merebdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8082
+      USER_SERVICE_URL: user-service:8080
     depends_on:
       - postgres
       - kafka
@@ -43,7 +64,7 @@ services:
     image: postgres:15
     container_name: postgres
     environment:
-      POSTGRES_DB: userdb
+      POSTGRES_DB: merebdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:

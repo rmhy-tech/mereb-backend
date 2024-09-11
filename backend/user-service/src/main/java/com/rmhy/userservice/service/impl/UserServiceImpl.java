@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
         String token = jwtService.generateToken(savedUser);
 
-        kafkaProducerService.sendMessage("user-topic", "New user '"+savedUser.getUsername()+"' registered");
+//        kafkaProducerService.sendMessage("user-topic", "New user '"+savedUser.getUsername()+"' registered");
 
         return new AuthResponse(token);
     }
@@ -58,13 +58,13 @@ public class UserServiceImpl implements UserService {
 
         String token = jwtService.generateToken(user);
 
-        kafkaProducerService.sendMessage("user-topic", "User " + user.getUsername() + " logged in.");
+//        kafkaProducerService.sendMessage("user-topic", "User " + user.getUsername() + " logged in.");
 
         return new AuthResponse(token);
     }
 
     @Override
-    public Optional<UserResponse> getUser(String username) {
+    public Optional<UserResponse> getUserByUsername(String username) {
         Optional<User> found = repository.findByUsername(username);
         if (found.isPresent()) {
             UserResponse response = mapper.toDto(found.get());

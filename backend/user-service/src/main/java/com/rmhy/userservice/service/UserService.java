@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface UserService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(AuthRequest request);
-    Optional<UserResponse> getUser(String username);
+    Optional<UserResponse> getUserByUsername(String username);
 }
