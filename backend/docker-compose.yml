@@ -1,8 +1,7 @@
-version: '3.8'
 services:
   kafka:
     image: apache/kafka:3.8.0
-    container_name: kafka-broker
+    container_name: kafka
     ports:
       - "9092:9092"                                # Port for the broker listener
       - "9093:9093"                                # Port for the controller listener
@@ -20,6 +19,42 @@ services:
       - ./data/kafka:/var/lib/kafka/data             # Kafka data volume to persist logs
     networks:
       - kafka-network
+
+  user-service:
+    image: user-service:latest
+    container_name: user-service
+    build:
+      context: ./user-service                     # Points to the user-service Dockerfile location
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"                               # Expose port 8080 for the user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092     # External Kafka server
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - kafka-network
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"                              # Expose port 5432 for PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # Persistent PostgreSQL data
+    networks:
+      - kafka-network
+
+volumes:
+  postgres_data: {}
 
 networks:
   kafka-network:
