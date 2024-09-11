@@ -27,10 +27,4 @@ public class UserController {
         AuthResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/{username}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable String username) {
-        Optional<UserResponse> response = userService.getUser(username);
-        return response.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
 }
