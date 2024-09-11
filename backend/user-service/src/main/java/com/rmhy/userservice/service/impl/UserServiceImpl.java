@@ -1,6 +1,7 @@
 package com.rmhy.userservice.service.impl;
 
 import com.rmhy.userservice.config.JwtService;
+import com.rmhy.userservice.config.KafkaProducerService;
 import com.rmhy.userservice.dto.request.AuthRequest;
 import com.rmhy.userservice.dto.request.RegisterRequest;
 import com.rmhy.userservice.dto.response.AuthResponse;
@@ -30,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
 
+    private final KafkaProducerService kafkaProducerService;
+
     @Override
     public AuthResponse register(RegisterRequest request) {
         User newUser = mapper.toEntity(request);
@@ -38,6 +41,8 @@ public class UserServiceImpl implements UserService {
         User savedUser = repository.save(newUser);
 
         String token = jwtService.generateToken(savedUser);
+
+        kafkaProducerService.sendMessage("user-topic", "New user '"+savedUser.getUsername()+"' registered");
 
         return new AuthResponse(token);
     }
@@ -52,6 +57,8 @@ public class UserServiceImpl implements UserService {
         var user = userDetailsService.loadUserByUsername(request.getUsername());
 
         String token = jwtService.generateToken(user);
+
+        kafkaProducerService.sendMessage("user-topic", "User " + user.getUsername() + " logged in.");
 
         return new AuthResponse(token);
     }
