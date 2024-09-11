@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka-broker
+    ports:
+      - "9092:9092"                                # Port for the broker listener
+      - "9093:9093"                                # Port for the controller listener
+    environment:
+      KAFKA_NODE_ID: 1                              # Unique node id for KRaft mode
+      KAFKA_PROCESS_ROLES: broker,controller         # Define this node as both a broker and controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093 # Define quorum voters for controller role, node 1 is running on localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093 # Define both broker and controller listeners
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 # Only advertise the broker listener, not the controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER    # Controller listener name
+      KAFKA_LOG_DIRS: /var/lib/kafka/data            # Log directories for broker
+      KAFKA_METADATA_LOG_DIRS: /var/lib/kafka/data   # Metadata directories for KRaft mode
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1      # Set replication factor for internal topics (for single broker)
+    volumes:
+      - ./data/kafka:/var/lib/kafka/data             # Kafka data volume to persist logs
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    driver: bridge
