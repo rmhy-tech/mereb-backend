@@ -4,6 +4,8 @@ LABEL authors="Leul"
 # Set the working directory in the container
 WORKDIR /app
 
+RUN mvn clean package
+
 ARG JAR_FILE=target/*.jar
 
 # Copy the JAR file of the Spring Boot application

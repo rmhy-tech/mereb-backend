@@ -1,4 +1,44 @@
 services:
+  config-server:
+    build:
+      context: ./config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - app-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+
+  discovery-service:
+    image: discovery-service:latest
+    container_name: discovery-service
+    build:
+      context: ./discovery-service
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - EUREKA_INSTANCE_HOSTNAME=discovery-service
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka
+      - SPRING_PROFILES_ACTIVE=default
+    depends_on:
+      - discovery-service
+      - config-server
+    restart: unless-stopped
+
   kafka:
     image: apache/kafka:3.8.0
     container_name: kafka
@@ -18,7 +58,7 @@ services:
     volumes:
       - ./data/kafka:/var/lib/kafka/data             # Kafka data volume to persist logs
     networks:
-      - kafka-network
+      - app-network
 
   user-service:
     image: user-service:latest
@@ -33,11 +73,14 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092     # External Kafka server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
     depends_on:
       - postgres
       - kafka
+      - discovery-service
+      - config-server
     networks:
-      - kafka-network
+      - app-network
 
   post-service:
     image: post-service:latest
@@ -54,11 +97,14 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8082
       USER_SERVICE_URL: user-service:8080
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
     depends_on:
       - postgres
       - kafka
+      - discovery-service
+      - config-server
     networks:
-      - kafka-network
+      - app-network
 
   postgres:
     image: postgres:15
@@ -72,11 +118,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data   # Persistent PostgreSQL data
     networks:
-      - kafka-network
+      - app-network
 
 volumes:
   postgres_data: {}
 
 networks:
-  kafka-network:
+  app-network:
     driver: bridge
