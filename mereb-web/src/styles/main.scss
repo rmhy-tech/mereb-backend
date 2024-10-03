@@ -1,0 +1,17 @@
+@import "./variables";
+@import "./mixins";
+
+.app {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: $primary-color;
+  padding: 20px;
+
+  h1 {
+    color: adjust-color($primary-color, $lightness: -10%);
+    @include center-text;
+  }
+
+  p {
+    font-size: 18px;
+  }
+}
