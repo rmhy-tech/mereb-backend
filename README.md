@@ -1,3 +1,3 @@
-# <img src="mereb.ico" alt="Mereb Icon" width="20" height="20"> Mereb
+# <img src="mereb.ico" alt="Mereb Icon" width="50" height="50"> Mereb
 
 
