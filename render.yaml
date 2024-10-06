@@ -1,30 +1,33 @@
+# Exported from Render on 2024-10-06T02:00:33Z
 services:
   - type: web
     name: user-service
     runtime: docker
+    repo: https://github.com/rmhy-tech/mereb
     plan: free
-    dockerfilePath: ./user-service/Dockerfile
-    dockerContext: ./user-service
-    buildCommand: docker-compose -f docker-compose.yml build user-service
-    autoDeploy: true
+    region: oregon
+    dockerCommand: docker-compose -f build post-service
+    dockerContext: ./
+    dockerfilePath: ./Dockerfile
     rootDir: user-service
-
-  - type: web
-    name: post-service
-    runtime: docker
-    plan: free
-    dockerfilePath: ./post-service/Dockerfile
-    dockerContext: ./post-service
-    buildCommand: docker-compose -f docker-compose.yml build post-service
-    autoDeploy: true
-    rootDir: post-service
-
   - type: web
     name: mereb-web
     runtime: docker
+    repo: https://github.com/rmhy-tech/mereb
     plan: free
-    dockerfilePath: ./mereb-web/Dockerfile
-    dockerContext: ./mereb-web
-    buildCommand: docker-compose -f docker-compose.yml build mereb-web
-    autoDeploy: true
+    region: oregon
+    dockerCommand: docker-compose -f build mereb-web
+    dockerContext: ./
+    dockerfilePath: ./Dockerfile
     rootDir: mereb-web
+  - type: web
+    name: post-service
+    runtime: docker
+    repo: https://github.com/rmhy-tech/mereb
+    plan: free
+    region: oregon
+    dockerCommand: docker-compose -f build user-service
+    dockerContext: ./
+    dockerfilePath: ./Dockerfile
+    rootDir: post-service
+version: "1"
