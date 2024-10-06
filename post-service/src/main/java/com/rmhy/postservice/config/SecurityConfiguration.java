@@ -1,10 +1,12 @@
-package com.rmhy.postservice.config;
+package com.rmhy.userservice.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
@@ -18,12 +20,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-@Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
+@Configuration
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
     private final JwtFilter jwtFilter;
+    private final AuthenticationProvider authenticationProvider;
 
     @Value("${CORS_ALLOWED_ORIGINS:${cors.allowed.origins}}")
     private String allowedOrigins;
@@ -33,14 +37,14 @@ public class SecurityConfiguration {
         return httpSecurity.csrf(CsrfConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/api/posts").authenticated()
-                        .requestMatchers("/api/posts/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
@@ -58,4 +62,5 @@ public class SecurityConfiguration {
 
         return source;
     }
+
 }

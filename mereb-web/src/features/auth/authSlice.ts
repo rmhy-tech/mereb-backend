@@ -3,7 +3,7 @@ import {AuthState, LoginCredentials, RegisterCredentials} from './types';
 import axios from "axios";
 import {jwtDecode} from 'jwt-decode';
 
-const baseUrl = "http://localhost:8082/api/users";
+const baseUrl = "http://13.83.41.233:8082/api/users";
 
 const initialState: AuthState = {
     currentUser: null,

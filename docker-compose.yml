@@ -33,7 +33,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       # SPRING_PROFILES_ACTIVE: default
-      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085
+      CORS_ALLOWED_ORIGINS: http://13.83.41.233:5173, http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085
     depends_on:
       # config-server:
       #   condition: service_healthy
@@ -58,8 +58,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka
       # SPRING_PROFILES_ACTIVE: default
-      USER_SERVICE_URL: user-service:8082
-      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085
+      USER_SERVICE_URL: http://13.83.41.233:8082
+      CORS_ALLOWED_ORIGINS: http://13.83.41.233:5173
     depends_on:
       # config-server:
       #   condition: service_healthy
@@ -76,11 +76,11 @@ services:
       dockerfile: Dockerfile
     container_name: mereb-web
     ports:
-      - "8084:80"
+      - "5173:80"
     environment:
       NODE_ENV: production
-      USER_SERVICE_URL: user-service:8082
-      POST_SERVICE_URL: post-service:8083
+      MEREB_USER_SERVICE_URL: http://13.83.41.233:8082
+      MEREB_POST_SERVICE_URL: http://13.83.41.233:8083
     depends_on:
       user-service:
         condition: service_started

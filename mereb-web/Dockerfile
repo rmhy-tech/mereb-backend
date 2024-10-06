@@ -24,8 +24,8 @@ FROM nginx:alpine
 # Copy the build output to Nginx's HTML folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+COPY env.sh /docker-entrypoint.d/env.sh
+
+RUN chmod +x /docker-entrypoint.d/env.sh
