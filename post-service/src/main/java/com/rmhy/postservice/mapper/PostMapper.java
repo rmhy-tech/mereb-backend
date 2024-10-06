@@ -14,6 +14,7 @@ public class PostMapper {
         return new Post(
                 request.getContent(),
                 request.getUserId(),
+                request.getUsername(),
                 request.getCreatedAt()
         );
     }
@@ -23,6 +24,7 @@ public class PostMapper {
                 post.getId(),
                 post.getContent(),
                 post.getUserId(),
+                post.getUsername(),
                 post.getCreatedAt()
         );
     }

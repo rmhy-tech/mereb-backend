@@ -44,7 +44,7 @@ const PostItem: React.FC<PostItemProps> = ({post, deletePost}) => {
                 <Card.Title
                     titleStyle={{color: "#000"}}
                     subtitleStyle={{color: "#ccc", fontSize: 10}}
-                    title={post.userId}
+                    title={post.username}
                     subtitle={moment(post.createdAt).fromNow()}
                     left={(props) => (
                         <Avatar.Text

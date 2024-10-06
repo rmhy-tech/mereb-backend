@@ -37,6 +37,7 @@ public class PostController {
         String username = jwtUtil.getUsernameFromRequest(request);
         Long userId = getUserIdFromUsername(username);
         postRequest.setUserId(userId);
+        postRequest.setUsername(username);
         PostResponse createdPost = postService.create(postRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
     }

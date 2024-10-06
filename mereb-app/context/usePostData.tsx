@@ -59,6 +59,7 @@ export interface Post {
     id?: number;
     content: string;
     userId?: number;
+    username?: number;
     createdAt: string;
 }
 
@@ -89,7 +90,7 @@ export default function usePostData():PostDataState {
             if (session) {
                 try {
                     const data = await fetchWithAuth(POST_URL, session);
-                    // console.log("API data:", data);
+                    console.log("API data:", data);
                     setPosts(data);
                     setIsLoading(false);
                 } catch (error) {

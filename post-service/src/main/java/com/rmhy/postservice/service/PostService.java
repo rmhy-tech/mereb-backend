@@ -20,7 +20,6 @@ public class PostService {
 
     public PostResponse create(PostRequest request) {
         Post newPost = postMapper.toEntity(request);
-
         Post savedPost = postRepository.save(newPost);
 
         return postMapper.toDto(savedPost);

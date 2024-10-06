@@ -19,11 +19,13 @@ public class Post {
 
     private String content;
     private Long userId;
+    private String username;
     private LocalDateTime createdAt;
 
-    public Post(String content, Long userId, LocalDateTime createdAt) {
+    public Post(String content, Long userId, String username, LocalDateTime createdAt) {
         this.content = content;
         this.userId = userId;
+        this.username = username;
         this.createdAt = createdAt;
     }
 }
