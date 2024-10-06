@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: user-service
+    env: docker
+    plan: free
+    buildCommand: docker-compose build user-service
+    startCommand: docker-compose up user-service
+    autoDeploy: true
+
+  - type: web
+    name: post-service
+    env: docker
+    plan: free
+    buildCommand: docker-compose build post-service
+    startCommand: docker-compose up post-service
+    autoDeploy: true
+
+  - type: web
+    name: mereb-web
+    env: docker
+    plan: free
+    buildCommand: docker-compose build mereb-web
+    startCommand: docker-compose up mereb-web
+    autoDeploy: true
