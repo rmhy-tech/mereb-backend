@@ -3,6 +3,8 @@ services:
     name: user-service
     runtime: docker
     plan: free
+    dockerfilePath: ./user-service/Dockerfile
+    dockerContext: ./user-service
     buildCommand: docker-compose -f docker-compose.yml build user-service
     autoDeploy: true
     rootDir: user-service
@@ -11,6 +13,8 @@ services:
     name: post-service
     runtime: docker
     plan: free
+    dockerfilePath: ./post-service/Dockerfile
+    dockerContext: ./post-service
     buildCommand: docker-compose -f docker-compose.yml build post-service
     autoDeploy: true
     rootDir: post-service
@@ -19,6 +23,8 @@ services:
     name: mereb-web
     runtime: docker
     plan: free
+    dockerfilePath: ./mereb-web/Dockerfile
+    dockerContext: ./mereb-web
     buildCommand: docker-compose -f docker-compose.yml build mereb-web
     autoDeploy: true
     rootDir: mereb-web
