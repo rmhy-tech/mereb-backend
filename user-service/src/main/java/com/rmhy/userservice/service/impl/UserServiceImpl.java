@@ -39,8 +39,6 @@ public class UserServiceImpl implements UserService {
 
         String token = jwtService.generateToken(savedUser);
 
-//        kafkaProducerService.sendMessage("user-topic", "New user '"+savedUser.getUsername()+"' registered");
-
         return new AuthResponse(token);
     }
 
@@ -54,8 +52,6 @@ public class UserServiceImpl implements UserService {
         var user = userDetailsService.loadUserByUsername(request.getUsername());
 
         String token = jwtService.generateToken(user);
-
-//        kafkaProducerService.sendMessage("user-topic", "User " + user.getUsername() + " logged in.");
 
         return new AuthResponse(token);
     }
