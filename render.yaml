@@ -1,21 +1,24 @@
 services:
   - type: web
     name: user-service
-    env: docker
+    runtime: docker
     plan: free
     buildCommand: docker-compose -f docker-compose.yml build user-service
     autoDeploy: true
+    rootDir: user-service
 
   - type: web
     name: post-service
-    env: docker
+    runtime: docker
     plan: free
     buildCommand: docker-compose -f docker-compose.yml build post-service
     autoDeploy: true
+    rootDir: post-service
 
   - type: web
     name: mereb-web
-    env: docker
+    runtime: docker
     plan: free
     buildCommand: docker-compose -f docker-compose.yml build mereb-web
     autoDeploy: true
+    rootDir: mereb-web
