@@ -3,19 +3,19 @@ services:
     name: user-service
     env: docker
     plan: free
-    buildCommand: docker-compose build user-service
+    buildCommand: docker-compose -f docker-compose.yml build user-service
     autoDeploy: true
 
   - type: web
     name: post-service
     env: docker
     plan: free
-    buildCommand: docker-compose build post-service
+    buildCommand: docker-compose -f docker-compose.yml build post-service
     autoDeploy: true
 
   - type: web
     name: mereb-web
     env: docker
     plan: free
-    buildCommand: docker-compose build mereb-web
+    buildCommand: docker-compose -f docker-compose.yml build mereb-web
     autoDeploy: true
