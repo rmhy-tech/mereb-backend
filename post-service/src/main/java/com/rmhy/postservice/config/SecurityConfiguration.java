@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,6 +36,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/api/posts").authenticated()
                         .requestMatchers("/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -47,9 +49,10 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
 
         List<String> originsList = Arrays.asList(allowedOrigins.split(","));
-        configuration.setAllowedOrigins(originsList);
+        List<String> origins = originsList.isEmpty() ? List.of("*") : originsList;
+        configuration.setAllowedOrigins(origins);
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "baggage", "sentry-trace"));  // Add necessary headers
         configuration.setAllowCredentials(true);
 
