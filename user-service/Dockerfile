@@ -5,11 +5,12 @@ LABEL authors="Leul Tewolde"
 
 WORKDIR /app
 
-# Copy over project files for Maven
-COPY mvnw pom.xml ./
+# Copy Maven wrapper and configuration
+COPY mvnw ./
 COPY .mvn .mvn
+COPY pom.xml ./
 
-# Cache dependencies (Maven downloads) for faster subsequent builds
+# Ensure that mvnw is executable and cache dependencies
 RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B
 
 # Now copy the source code
@@ -26,7 +27,7 @@ WORKDIR /app
 # Expose the port Spring Boot will run on
 EXPOSE 8082
 
-# Copy the built JAR from the build stage
+# Copy the built JAR file from the build stage
 COPY --from=build /app/target/*.jar user-service.jar
 
 # Run the application
