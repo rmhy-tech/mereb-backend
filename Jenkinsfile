@@ -20,11 +20,19 @@ pipeline {
             }
         }
 
+        stage('Build with Maven') {
+            steps {
+                dir("${PROJECT_DIR}") { 
+                    bat "${MAVEN_HOME}/bin/mvn clean package -DskipTests"  // Run the Maven build
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 dir("${PROJECT_DIR}") { // Navigate to the project directory where the Dockerfile is located
                     script {
-                        bat 'docker build -t user-service .' // Make sure the Dockerfile is here
+                        bat 'docker build -t user-service .' // Build the Docker image based on the JAR from the Maven build
                     }
                 }
             }
@@ -43,7 +51,7 @@ pipeline {
                 script {
                     retry(5) { // Retry 5 times with a 10-second sleep to wait for the service to start
                         sleep 10
-                        bat 'curl http://localhost:8082/api/v2/auth/health'
+                        bat 'curl http://localhost:8082/actuator/health'
                     }
                 }
             }
