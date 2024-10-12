@@ -1,4 +1,4 @@
-package exception;
+package com.rmhy.userservice.exception;
 
 import com.rmhy.userservice.utils.ErrorResponse;
 import org.slf4j.Logger;

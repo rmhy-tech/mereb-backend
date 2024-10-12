@@ -1,4 +1,4 @@
-package exception;
+package com.rmhy.userservice.exception;
 
 public class UserNotFoundException extends RuntimeException{
     public UserNotFoundException(String message) {
