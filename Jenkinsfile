@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/rmhy/mereb-backend.git',
+                    url: 'https://github.com/rmhy-tech/mereb-backend.git',
                     credentialsId: '263fe52f-0aa4-44ad-ae87-9bb00a281eca'
             }
         }
