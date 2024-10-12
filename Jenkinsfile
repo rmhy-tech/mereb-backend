@@ -22,7 +22,7 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                dir("${PROJECT_DIR}") { 
+                dir("${PROJECT_DIR}") {
                     bat "${MAVEN_HOME}/bin/mvn clean package -DskipTests"  // Run the Maven build
                 }
             }
@@ -38,10 +38,10 @@ pipeline {
             }
         }
 
-        stage('Run User Service in Docker') {
+        stage('Run User Service in Docker with Test Profile') {
             steps {
                 script {
-                    bat 'docker run -d -p 8082:8082 --name user-service user-service'
+                    bat 'docker run -d -p 8082:8082 --name user-service user-service --spring.profiles.active=test'
                 }
             }
         }
@@ -49,10 +49,8 @@ pipeline {
         stage('Wait for User Service to Start') {
             steps {
                 script {
-                    // Retry 10 times with a 15-second sleep between retries
-                    retry(10) {
-                        sleep 15
-                        bat 'docker logs user-service' // Check if the application started properly
+                    retry(5) {
+                        sleep 10
                         bat 'curl http://localhost:8082/actuator/health'
                     }
                 }
