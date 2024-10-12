@@ -19,7 +19,7 @@ pipeline {
             steps {
                 // Navigate to the user-service directory and build it
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn clean install"
+                    bat "${MAVEN_HOME}/bin/mvn clean install"
                 }
             }
         }
@@ -28,7 +28,7 @@ pipeline {
             steps {
                 // Run tests for the user-service
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn test"
+                    bat "${MAVEN_HOME}/bin/mvn test"
                 }
             }
         }
@@ -37,7 +37,7 @@ pipeline {
             steps {
                 // Package the user-service into a JAR
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn package"
+                    bat "${MAVEN_HOME}/bin/mvn package"
                 }
             }
         }
