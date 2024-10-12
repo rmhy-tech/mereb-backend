@@ -9,8 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the entire monorepo
-                git branch: 'main', url: 'https://github.com/rmhy/mereb-backend.git'
+                git branch: 'main',
+                    url: 'https://github.com/rmhy/mereb-backend.git',
+                    credentialsId: '263fe52f-0aa4-44ad-ae87-9bb00a281eca'
             }
         }
 
