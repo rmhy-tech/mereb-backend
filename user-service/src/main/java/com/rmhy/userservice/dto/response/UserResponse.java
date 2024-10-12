@@ -3,6 +3,9 @@ package com.rmhy.userservice.dto.response;
 import com.rmhy.userservice.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.ZonedDateTime;
 
 @Data
 @AllArgsConstructor
@@ -13,4 +16,6 @@ public class UserResponse {
     private String username;
     private String email;
     private Role role;
+    private ZonedDateTime createdDate;
+    private ZonedDateTime updatedDate;
 }

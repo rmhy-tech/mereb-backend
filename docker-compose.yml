@@ -31,7 +31,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/merebdb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,http://mereb-web:80
+      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,36 +51,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       USER_SERVICE_URL: user-service:8082
-      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,http://mereb-web:80
+      CORS_ALLOWED_ORIGINS: http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - mereb_app-network
 
-  mereb-web:
-    image: leultewolde/mereb-web:latest
-    build:
-      context: ./mereb-web
-      dockerfile: Dockerfile
-    container_name: mereb-web
-    ports:
-      - "8084:80"
-    environment:
-      NODE_ENV: production
-      VITE_USER_SERVICE_URL: localhost:8082
-      VITE_POST_SERVICE_URL: localhost:8083
-    depends_on:
-      user-service:
-        condition: service_started
-      post-service:
-        condition: service_started
-    networks:
-      - mereb_app-network
-
 volumes:
   postgres_data:
-
 
 networks:
   mereb_app-network:
