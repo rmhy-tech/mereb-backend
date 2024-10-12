@@ -22,7 +22,6 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Navigate to the user-service directory and build it
                 dir("${PROJECT_DIR}") {
                     bat "${MAVEN_HOME}/bin/mvn clean install"
                 }
@@ -31,7 +30,6 @@ pipeline {
 
         stage('Test') {
             steps {
-                // Run tests for the user-service
                 dir("${PROJECT_DIR}") {
                     bat "${MAVEN_HOME}/bin/mvn test"
                 }
@@ -43,6 +41,25 @@ pipeline {
                 // Package the user-service into a JAR
                 dir("${PROJECT_DIR}") {
                     bat "${MAVEN_HOME}/bin/mvn package"
+                }
+            }
+        }
+
+        stage('Start User Service') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    bat "${MAVEN_HOME}/bin/mvn spring-boot:run &"
+                }
+            }
+        }
+
+        stage('Wait for User Service to Start') {
+            steps {
+                script {
+                    retry(5) {
+                        sleep 10
+                        bat 'curl http://localhost:8082/api/v2/auth/health'
+                    }
                 }
             }
         }
@@ -72,12 +89,12 @@ pipeline {
 
     post {
         success {
-            // Archive the JAR artifact
+            bat "taskkill /F /IM java.exe" // Optional: Stop the service after tests
+
             dir("${PROJECT_DIR}") {
                 archiveArtifacts artifacts: 'target/*.jar', allowEmptyArchive: true
             }
 
-            // Publish test results
             dir("${PROJECT_DIR}") {
                 junit '**/target/surefire-reports/*.xml'
             }
