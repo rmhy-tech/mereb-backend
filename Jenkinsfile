@@ -94,16 +94,19 @@ pipeline {
         failure {
             script {
                 // Stop the service even if the build fails
-                bat 'docker stop user-service || true'
-                bat 'docker rm user-service || true'
+                bat 'docker stop user-service || docker rm user-service || exit 0'
             }
 
             echo 'Build or tests failed!'
         }
 
         always {
-            // Optionally clean up the Docker images to save space
-            bat 'docker rmi user-service || true'
+            // Clean up the Docker images to save space
+            script {
+                bat '''
+                    docker rmi -f user-service || exit 0
+                '''
+            }
         }
     }
 }
