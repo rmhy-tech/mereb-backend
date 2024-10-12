@@ -9,8 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the entire monorepo
-                git branch: 'main', url: 'https://github.com/rmhy/mereb-backend.git'
+                git branch: 'main',
+                    url: 'https://github.com/rmhy-tech/mereb-backend.git',
+                    credentialsId: '263fe52f-0aa4-44ad-ae87-9bb00a281eca'
             }
         }
 
@@ -18,7 +19,7 @@ pipeline {
             steps {
                 // Navigate to the user-service directory and build it
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn clean install"
+                    bat "${MAVEN_HOME}/bin/mvn clean install"
                 }
             }
         }
@@ -27,7 +28,7 @@ pipeline {
             steps {
                 // Run tests for the user-service
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn test"
+                    bat "${MAVEN_HOME}/bin/mvn test"
                 }
             }
         }
@@ -36,7 +37,7 @@ pipeline {
             steps {
                 // Package the user-service into a JAR
                 dir("${PROJECT_DIR}") {
-                    sh "${MAVEN_HOME}/bin/mvn package"
+                    bat "${MAVEN_HOME}/bin/mvn package"
                 }
             }
         }
