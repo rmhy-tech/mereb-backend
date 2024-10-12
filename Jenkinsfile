@@ -20,35 +20,20 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                dir("${PROJECT_DIR}") {
-                    bat "${MAVEN_HOME}/bin/mvn clean install"
+                script {
+                    // Build the Docker image using the provided Dockerfile
+                    bat 'docker build -t user-service .'
                 }
             }
         }
 
-        stage('Test') {
+        stage('Run User Service in Docker') {
             steps {
-                dir("${PROJECT_DIR}") {
-                    bat "${MAVEN_HOME}/bin/mvn test"
-                }
-            }
-        }
-
-        stage('Package') {
-            steps {
-                // Package the user-service into a JAR
-                dir("${PROJECT_DIR}") {
-                    bat "${MAVEN_HOME}/bin/mvn package"
-                }
-            }
-        }
-
-        stage('Start User Service') {
-            steps {
-                dir("${PROJECT_DIR}") {
-                    bat "${MAVEN_HOME}/bin/mvn spring-boot:run &"
+                script {
+                    // Start the Docker container and run it in detached mode
+                    bat 'docker run -d -p 8082:8082 --name user-service user-service'
                 }
             }
         }
@@ -56,7 +41,7 @@ pipeline {
         stage('Wait for User Service to Start') {
             steps {
                 script {
-                    retry(5) {
+                    retry(5) { // Retry 5 times with a 10-second sleep to wait for the service to start
                         sleep 10
                         bat 'curl http://localhost:8082/api/v2/auth/health'
                     }
@@ -89,22 +74,28 @@ pipeline {
 
     post {
         success {
-            bat "taskkill /F /IM java.exe" // Optional: Stop the service after tests
-
-            dir("${PROJECT_DIR}") {
-                archiveArtifacts artifacts: 'target/*.jar', allowEmptyArchive: true
-            }
-
-            dir("${PROJECT_DIR}") {
-                junit '**/target/surefire-reports/*.xml'
+            script {
+                // Stop and remove the Docker container after tests
+                bat 'docker stop user-service'
+                bat 'docker rm user-service'
             }
 
             echo 'Build and Postman tests executed successfully.'
         }
 
         failure {
-            // Handle build failures
-            echo "Build failed!"
+            script {
+                // Stop the service even if the build fails
+                bat 'docker stop user-service || true'
+                bat 'docker rm user-service || true'
+            }
+
+            echo 'Build or tests failed!'
+        }
+
+        always {
+            // Optionally clean up the Docker images to save space
+            bat 'docker rmi user-service || true'
         }
     }
 }
