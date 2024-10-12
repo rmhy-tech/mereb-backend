@@ -5,6 +5,8 @@ pipeline {
         MAVEN_HOME = tool 'Maven 3'  // Assumes Maven is installed in Jenkins
         PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
         POSTMAN_API_KEY = credentials('postman-api-key') // Use the ID you set in the Jenkins credentials
+        SLACK_CHANNEL = '#builds' // Or any other channel you want to use
+        SLACK_CREDENTIAL_ID = credentials('slack-token')
     }
 
     tools {
@@ -89,6 +91,7 @@ pipeline {
             }
 
             echo 'Build and Postman tests executed successfully.'
+            slackSend(channel: "${SLACK_CHANNEL}", color: 'good', message: "Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})")
         }
 
         failure {
@@ -98,6 +101,7 @@ pipeline {
             }
 
             echo 'Build or tests failed!'
+            slackSend(channel: "${SLACK_CHANNEL}", color: 'danger', message: "Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})")
         }
 
         always {
