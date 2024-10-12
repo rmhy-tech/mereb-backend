@@ -22,9 +22,10 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    // Build the Docker image using the provided Dockerfile
-                    bat 'docker build -t user-service .'
+                dir("${PROJECT_DIR}") { // Navigate to the project directory where the Dockerfile is located
+                    script {
+                        bat 'docker build -t user-service .' // Make sure the Dockerfile is here
+                    }
                 }
             }
         }
@@ -32,7 +33,6 @@ pipeline {
         stage('Run User Service in Docker') {
             steps {
                 script {
-                    // Start the Docker container and run it in detached mode
                     bat 'docker run -d -p 8082:8082 --name user-service user-service'
                 }
             }
