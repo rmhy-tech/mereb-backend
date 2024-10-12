@@ -49,8 +49,10 @@ pipeline {
         stage('Wait for User Service to Start') {
             steps {
                 script {
-                    retry(5) { // Retry 5 times with a 10-second sleep to wait for the service to start
-                        sleep 10
+                    // Retry 10 times with a 15-second sleep between retries
+                    retry(10) {
+                        sleep 15
+                        bat 'docker logs user-service' // Check if the application started properly
                         bat 'curl http://localhost:8082/actuator/health'
                     }
                 }
