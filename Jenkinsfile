@@ -96,7 +96,9 @@ pipeline {
             // Send success message to Slack via Webhook with more detailed information
             script {
                 bat """
-                    curl -X POST -H "Content-type: application/json" --data "{\\\"text\\\": \\\"✅ *Build SUCCESS*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: SUCCESS\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: <${env.BUILD_URL}|Open Build>\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\\"}" ${SLACK_WEBHOOK_URL}
+                    curl -X POST -H "Content-type: application/json" ^
+                    --data "{\\"text\\": \\"✅ *Build SUCCESS*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: SUCCESS\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: [Open Build](${env.BUILD_URL})\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\"}" ^
+                    ${SLACK_WEBHOOK_URL}
                 """
             }
         }
@@ -111,7 +113,9 @@ pipeline {
             // Send failure message to Slack via Webhook with more detailed information
             script {
                 bat """
-                    curl -X POST -H "Content-type: application/json" --data "{\\\"text\\\": \\\"❌ *Build FAILED*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: FAILURE\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: <${env.BUILD_URL}|Open Build>\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\\"}" ${SLACK_WEBHOOK_URL}
+                    curl -X POST -H "Content-type: application/json" ^
+                    --data "{\\"text\\": \\"❌ *Build FAILED*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: FAILURE\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: [Open Build](${env.BUILD_URL})\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\"}" ^
+                    ${SLACK_WEBHOOK_URL}
                 """
             }
         }
