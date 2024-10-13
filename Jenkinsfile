@@ -5,9 +5,11 @@ pipeline {
         MAVEN_HOME = tool 'Maven 3'  // Assumes Maven is installed in Jenkins
         PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
         POSTMAN_API_KEY = credentials('postman-api-key') // Use the ID you set in the Jenkins credentials
-        SLACK_CHANNEL = '#builds' // Or any other channel you want to use
-        SLACK_CREDENTIAL_ID = 'slack-token'
-        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // Incoming webhook URL
+
+        SLACK_WEBHOOK_URL = credentials('slack-webhook') // Slack Webhook from Jenkins credentials
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub') // Docker Hub credentials from Jenkins
+        DOCKER_HUB_USERNAME = 'leultewolde' // Your Docker Hub username
+        IMAGE_NAME = 'user-service' // Docker image name
     }
 
     tools {
@@ -35,7 +37,7 @@ pipeline {
             steps {
                 dir("${PROJECT_DIR}") { // Navigate to the project directory where the Dockerfile is located
                     script {
-                        bat 'docker build -t user-service .' // Build the Docker image based on the JAR from the Maven build
+                        bat "docker build -t ${IMAGE_NAME} ." // Build the Docker image based on the JAR from the Maven build
                     }
                 }
             }
@@ -44,7 +46,7 @@ pipeline {
         stage('Run User Service in Docker with Test Profile') {
             steps {
                 script {
-                    bat 'docker run -d -p 8082:8082 --name user-service user-service --spring.profiles.active=test'
+                    bat "docker run -d -p 8082:8082 --name ${IMAGE_NAME} ${IMAGE_NAME} --spring.profiles.active=test"
                 }
             }
         }
@@ -87,11 +89,20 @@ pipeline {
         success {
             script {
                 // Stop and remove the Docker container after tests
-                bat 'docker stop user-service || exit 0'
-                bat 'docker rm user-service || exit 0'
+                bat "docker stop ${IMAGE_NAME} || exit 0"
+                bat "docker rm ${IMAGE_NAME} || exit 0"
             }
 
             echo 'Build and Postman tests executed successfully.'
+
+            // Docker Hub login and push
+            script {
+                bat """
+                    docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_CREDENTIALS}
+                    docker tag ${IMAGE_NAME}:latest ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                    docker push ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                """
+            }
 
             // Send success message to Slack via Webhook with more detailed information
             script {
@@ -105,7 +116,7 @@ pipeline {
 
         failure {
             script {
-                bat 'docker stop user-service || docker rm user-service || exit 0'
+                bat "docker stop ${IMAGE_NAME} || docker rm ${IMAGE_NAME} || exit 0"
             }
 
             echo 'Build or tests failed!'
@@ -123,7 +134,7 @@ pipeline {
         always {
             script {
                 bat '''
-                    docker rmi -f user-service || exit 0
+                    docker rmi -f ${IMAGE_NAME} || exit 0
                 '''
             }
         }
