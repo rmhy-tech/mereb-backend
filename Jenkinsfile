@@ -95,7 +95,7 @@ pipeline {
 
             echo 'Build and Postman tests executed successfully.'
 
-            // Docker Hub login and push
+            // Docker Hub login and push 
             script {
                 bat """
                     docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_CREDENTIALS}
