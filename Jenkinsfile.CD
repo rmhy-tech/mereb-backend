@@ -43,9 +43,7 @@ pipeline {
             steps {
                 script {
                     // Use docker-compose to deploy the locally built Docker image
-                    sh """
-                        docker compose up -d
-                    """
+                    sh 'docker-compose up -d user-service'
                 }
             }
         }
