@@ -85,7 +85,6 @@ pipeline {
     post {
         success {
             script {
-                // Stop and remove the Docker container after tests
                 bat 'docker stop user-service'
                 bat 'docker rm user-service'
             }
@@ -96,7 +95,6 @@ pipeline {
 
         failure {
             script {
-                // Stop the service even if the build fails
                 bat 'docker stop user-service || docker rm user-service || exit 0'
             }
 
@@ -105,7 +103,6 @@ pipeline {
         }
 
         always {
-            // Clean up the Docker images to save space
             script {
                 bat '''
                     docker rmi -f user-service || exit 0
