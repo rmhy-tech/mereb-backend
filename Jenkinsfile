@@ -8,7 +8,7 @@ pipeline {
 
         SLACK_WEBHOOK_URL = credentials('slack-webhook') // Slack Webhook from Jenkins credentials
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub') // Docker Hub credentials from Jenkins
-        DOCKER_HUB_USERNAME = 'leultewolde' // Your Docker Hub username
+        // DOCKER_HUB_USERNAME = 'leultewolde' // Your Docker Hub username
         IMAGE_NAME = 'user-service' // Docker image name
         LINODE_IP = credentials('linode-ip')
     }
