@@ -44,6 +44,18 @@ pipeline {
             }
         }
 
+        stage('Remove Existing Container') {
+            steps {
+                script {
+                    // Stop and remove the container if it exists
+                    bat """
+                        docker ps -a -q --filter "name=${IMAGE_NAME}" | findstr . && docker stop ${IMAGE_NAME} || exit 0
+                        docker ps -a -q --filter "name=${IMAGE_NAME}" | findstr . && docker rm ${IMAGE_NAME} || exit 0
+                    """
+                }
+            }
+        }
+
         stage('Run User Service in Docker with Test Profile') {
             steps {
                 script {
@@ -112,17 +124,36 @@ pipeline {
     post {
         success {
             script {
+                // Stop and remove the Docker container after tests
                 bat "docker stop ${IMAGE_NAME} || exit 0"
                 bat "docker rm ${IMAGE_NAME} || exit 0"
             }
 
             echo 'Build and Postman tests executed successfully.'
 
-            script {
+            // Docker Hub login and push
+            withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                bat """
+                    docker login -u %DOCKER_HUB_USERNAME% -p %DOCKER_HUB_PASSWORD%
+                    docker tag ${IMAGE_NAME}:latest %DOCKER_HUB_USERNAME%/${IMAGE_NAME}:latest
+                    docker push %DOCKER_HUB_USERNAME%/${IMAGE_NAME}:latest
+                """
+            }
+
+            // Run commands on Linode after the push
+            withCredentials([sshUserPrivateKey(credentialsId: 'linode-ssh', keyFileVariable: 'SSH_KEY')]) {
+                bat """
+                    plink -i %SSH_KEY% root@${LINODE_IP} ^
+                    "docker compose pull && docker compose up -d"
+                """
+            }
+
+            // Send success message to Slack
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
                 bat """
                     curl -X POST -H "Content-type: application/json" ^
                     --data "{\\"text\\": \\"✅ *Build SUCCESS*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: SUCCESS\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: [Open Build](${env.BUILD_URL})\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\"}" ^
-                    ${SLACK_WEBHOOK_URL}
+                    %SLACK_WEBHOOK_URL%
                 """
             }
         }
@@ -134,12 +165,11 @@ pipeline {
 
             echo 'Build or tests failed!'
 
-            // Send failure message to Slack via Webhook with more detailed information
-            script {
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
                 bat """
                     curl -X POST -H "Content-type: application/json" ^
                     --data "{\\"text\\": \\"❌ *Build FAILED*\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Status*: FAILURE\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: [Open Build](${env.BUILD_URL})\\n *Git Branch*: ${env.GIT_BRANCH}\\n *Commit ID*: ${env.GIT_COMMIT}\\"}" ^
-                    ${SLACK_WEBHOOK_URL}
+                    %SLACK_WEBHOOK_URL%
                 """
             }
         }
