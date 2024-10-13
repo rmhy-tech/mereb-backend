@@ -1,0 +1,41 @@
+name: CI Workflow
+
+# Run this workflow on push and pull request events
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'user-service/**'     # Trigger this workflow only if changes happen in service-a
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'user-service/**'     # Trigger this workflow only if changes happen in service-
+
+jobs:
+  user-service:
+    name: Build and Test User Service (Java/Maven)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('user-service/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Test User Service
+        run: |
+          cd user-service
+          mvn clean install -DskipTests=false
