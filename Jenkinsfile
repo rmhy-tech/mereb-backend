@@ -112,7 +112,6 @@ pipeline {
     post {
         success {
             script {
-                // Stop and remove the Docker container after tests
                 bat "docker stop ${IMAGE_NAME} || exit 0"
                 bat "docker rm ${IMAGE_NAME} || exit 0"
             }
