@@ -17,7 +17,7 @@ jobs:
   user-service:
     name: Build and Test User Service (Java/Maven)
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -36,7 +36,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build and Test User Service
+      # Step 1: Build the project using mvn package (no tests run here)
+      - name: Build User Service
         run: |
           cd user-service
-          mvn clean install -DskipTests=false
+          mvn clean package -DskipTests=true  # Skipping tests during packaging
+
+      # Step 2: Run the tests separately after packaging
+      - name: Run Tests for User Service
+        run: |
+          cd user-service
+          mvn test  # Running tests separately after packaging
