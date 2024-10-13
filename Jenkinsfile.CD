@@ -8,6 +8,15 @@ pipeline {
     }
 
     stages {
+
+        stage('Build with Maven') {
+            steps {
+                dir("${PROJECT_DIR}") {  // Make sure the Maven build is running in the correct directory
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 dir("${PROJECT_DIR}") {
