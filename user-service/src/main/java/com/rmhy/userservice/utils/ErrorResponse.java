@@ -21,7 +21,7 @@ public class ErrorResponse {
         this.message = message;
         this.errorCode = errorCode;
         this.status = status;
-        this.timestamp = ZonedDateTime.now().toString();  // Adds a timestamp
+        this.timestamp = ZonedDateTime.now().toString();
     }
 }
 
