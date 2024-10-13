@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        MAVEN_HOME = tool 'Maven 3'
         PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
         IMAGE_NAME = 'user-service'  // Local Docker image name for user-service
         SLACK_WEBHOOK_URL = credentials('slack-webhook')
@@ -11,8 +12,8 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                dir("${PROJECT_DIR}") {  // Make sure the Maven build is running in the correct directory
-                    sh 'mvn clean package -DskipTests'
+                dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn clean package -DskipTests"
                 }
             }
         }
