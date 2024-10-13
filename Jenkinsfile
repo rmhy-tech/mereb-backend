@@ -7,6 +7,7 @@ pipeline {
         POSTMAN_API_KEY = credentials('postman-api-key') // Use the ID you set in the Jenkins credentials
         SLACK_CHANNEL = '#builds' // Or any other channel you want to use
         SLACK_CREDENTIAL_ID = 'slack-token'
+        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // Incoming webhook URL
     }
 
     tools {
@@ -90,7 +91,13 @@ pipeline {
             }
 
             echo 'Build and Postman tests executed successfully.'
-            slackSend(channel: "${SLACK_CHANNEL}", color: 'good', message: "Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})", tokenCredentialId: "${SLACK_CREDENTIAL_ID}")
+            script {
+                bat """
+                    curl -X POST -H 'Content-type: application/json' \
+                    --data '{"text": "Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})"}' \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
         }
 
         failure {
@@ -99,7 +106,15 @@ pipeline {
             }
 
             echo 'Build or tests failed!'
-            slackSend(channel: "${SLACK_CHANNEL}", color: 'danger', message: "Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})", tokenCredentialId: "${SLACK_CREDENTIAL_ID}")
+
+            // Send failure message to Slack via Webhook
+            script {
+                bat """
+                    curl -X POST -H 'Content-type: application/json' \
+                    --data '{"text": "Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})"}' \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
         }
 
         always {
