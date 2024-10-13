@@ -10,6 +10,7 @@ pipeline {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub') // Docker Hub credentials from Jenkins
         DOCKER_HUB_USERNAME = 'leultewolde' // Your Docker Hub username
         IMAGE_NAME = 'user-service' // Docker image name
+        LINODE_IP = credentials('linode-ip')
     }
 
     tools {
@@ -83,6 +84,29 @@ pipeline {
                 bat 'postman collection run "9308902-1c9fad5f-f1b4-4949-a1b3-38b9b50b824a" -e "9308902-8c3e09bd-9de5-4078-9549-12a713ad3489"'
             }
         }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    bat """
+                        docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_CREDENTIALS}
+                        docker tag ${IMAGE_NAME}:latest ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker push ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Run Commands on Linode') {
+            steps {
+                // Use SSH credentials to access Linode and rebuild Docker Compose
+                sshagent(credentials: ['linode-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no root@${LINODE_IP} 'docker compose pull && docker compose up -d'
+                    """
+                }
+            }
+        }
     }
 
     post {
@@ -94,15 +118,6 @@ pipeline {
             }
 
             echo 'Build and Postman tests executed successfully.'
-
-            // Docker Hub login and push 
-            script {
-                bat """
-                    docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_CREDENTIALS}
-                    docker tag ${IMAGE_NAME}:latest ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
-                    docker push ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
-                """
-            }
 
             script {
                 bat """
