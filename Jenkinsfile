@@ -104,7 +104,6 @@ pipeline {
                 """
             }
 
-            // Send success message to Slack via Webhook with more detailed information
             script {
                 bat """
                     curl -X POST -H "Content-type: application/json" ^
