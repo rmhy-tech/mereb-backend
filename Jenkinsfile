@@ -9,6 +9,11 @@ pipeline {
         SLACK_WEBHOOK_URL = credentials('slack-webhook')
     }
 
+    triggers {
+        // Schedule the pipeline to run every night at midnight (00:00)
+        cron('H 0 * * *')
+    }
+
     stages {
         stage('Checkout') {
             steps {
