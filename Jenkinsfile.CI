@@ -19,11 +19,8 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                // Cache the .m2 repository to avoid re-downloading dependencies
-                cache(path: '.m2/repository', key: 'maven-repo-${BUILD_ID}', persistToWorkspace: true) {
-                    dir("${PROJECT_DIR}") {
-                        sh "${MAVEN_HOME}/bin/mvn clean package -DskipTests"
-                    }
+                dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn clean package -DskipTests"
                 }
             }
         }
