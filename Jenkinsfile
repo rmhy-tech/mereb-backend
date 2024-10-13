@@ -118,7 +118,7 @@ pipeline {
             }
 
             // Run commands on Linode after the push
-            withCredentials([sshUserPrivateKey(credentialsId: 'linode-ssh', keyFileVariable: 'SSH_KEY')]) {
+            withCredentials([sshUserPrivateKey(credentialsId: 'linode-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                 bat """
                     plink -i %SSH_KEY% root@${LINODE_IP} ^
                     "docker compose pull && docker compose up -d"
