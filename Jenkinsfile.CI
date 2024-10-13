@@ -50,10 +50,9 @@ pipeline {
                 sh """
                     curl -X POST -H "Content-type: application/json" \
                     --data "{\\"text\\": \\"✅ *CI Build SUCCESS* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
-                    ${SLACK_WEBHOOK_URL}
+                    ${env.SLACK_WEBHOOK_URL}
                 """
             }
-            echo 'Build and Tests for user-service completed successfully.'
         }
         failure {
             script {
@@ -61,10 +60,10 @@ pipeline {
                 sh """
                     curl -X POST -H "Content-type: application/json" \
                     --data "{\\"text\\": \\"❌ *CI Build FAILURE* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
-                    ${SLACK_WEBHOOK_URL}
+                    ${env.SLACK_WEBHOOK_URL}
                 """
             }
-            echo 'Build or Tests for user-service failed.'
         }
     }
+
 }
