@@ -45,7 +45,7 @@ pipeline {
                 script {
                     // Use docker-compose to deploy the service
                     sh """
-                        docker compose -f ${WORKSPACE}/docker-compose.yml up -d user-service
+                        docker compose -f ${WORKSPACE}/docker-compose.yml up -d
                     """
                 }
             }
