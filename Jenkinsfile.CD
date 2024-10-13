@@ -6,6 +6,7 @@ pipeline {
         PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
         IMAGE_NAME = 'user-service'  // Local Docker image name for user-service
         SLACK_WEBHOOK_URL = credentials('slack-webhook')
+        MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
     }
 
     stages {
