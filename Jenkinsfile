@@ -86,11 +86,14 @@ pipeline {
     post {
         success {
             script {
-                bat 'docker stop user-service'
-                bat 'docker rm user-service'
+                // Stop and remove the Docker container after tests
+                bat 'docker stop user-service || exit 0'
+                bat 'docker rm user-service || exit 0'
             }
 
             echo 'Build and Postman tests executed successfully.'
+
+            // Send success message to Slack via Webhook
             script {
                 bat """
                     curl -X POST -H 'Content-type: application/json' \
