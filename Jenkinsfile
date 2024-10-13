@@ -96,8 +96,8 @@ pipeline {
             // Send success message to Slack via Webhook
             script {
                 bat """
-                    curl -X POST -H 'Content-type: application/json' \
-                    --data '{"text": "Build SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})"}' \
+                    curl -X POST -H "Content-type: application/json" ^
+                    --data "{\\"text\\": \\"Build SUCCESS: mereb-backend-pipeline [${env.BUILD_NUMBER}] (${env.BUILD_URL})\\"}" ^
                     ${SLACK_WEBHOOK_URL}
                 """
             }
@@ -113,8 +113,8 @@ pipeline {
             // Send failure message to Slack via Webhook
             script {
                 bat """
-                    curl -X POST -H 'Content-type: application/json' \
-                    --data '{"text": "Build FAILED: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL})"}' \
+                    curl -X POST -H "Content-type: application/json" ^
+                    --data "{\\"text\\": \\"Build FAILED: mereb-backend-pipeline [${env.BUILD_NUMBER}] (${env.BUILD_URL})\\"}" ^
                     ${SLACK_WEBHOOK_URL}
                 """
             }
