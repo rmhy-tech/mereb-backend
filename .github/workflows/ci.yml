@@ -5,15 +5,19 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'user-service/**'     # Trigger this workflow only if changes happen in service-a
   pull_request:
     branches:
       - main
+    paths:
+      - 'user-service/**'     # Trigger this workflow only if changes happen in service-
 
 jobs:
   user-service:
     name: Build and Test User Service (Java/Maven)
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'user-service/') || contains(github.event.pull_request.head.ref, 'user-service')
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
