@@ -92,7 +92,7 @@ class UserServiceApplicationTests {
     public void testGetAllUsersWithoutAuth() throws Exception {
         mockMvc.perform(get("/api/v2/users")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
