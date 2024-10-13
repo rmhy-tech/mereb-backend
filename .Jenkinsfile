@@ -2,19 +2,18 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = tool 'Maven 3'  // Assumes Maven is installed in Jenkins
-        PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
-        POSTMAN_API_KEY = credentials('postman-api-key') // Use the ID you set in the Jenkins credentials
+        MAVEN_HOME = tool 'Maven 3'
+        PROJECT_DIR = 'user-service'
+        POSTMAN_API_KEY = credentials('postman-api-key')
 
-        SLACK_WEBHOOK_URL = credentials('slack-webhook') // Slack Webhook from Jenkins credentials
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub') // Docker Hub credentials from Jenkins
-        // DOCKER_HUB_USERNAME = 'leultewolde' // Your Docker Hub username
-        IMAGE_NAME = 'user-service' // Docker image name
+        SLACK_WEBHOOK_URL = credentials('slack-webhook')
+
+        IMAGE_NAME = 'user-service'
         LINODE_IP = credentials('linode-ip')
     }
 
     tools {
-        nodejs "NodeJS_Latest" // Ensure Node.js is configured in Jenkins
+        nodejs "NodeJS_Latest"
     }
 
     stages {
@@ -29,7 +28,7 @@ pipeline {
         stage('Build with Maven') {
             steps {
                 dir("${PROJECT_DIR}") {
-                    bat "${MAVEN_HOME}/bin/mvn clean package -DskipTests"  // Run the Maven build
+                    bat "${MAVEN_HOME}/bin/mvn clean package -DskipTests"
                 }
             }
         }

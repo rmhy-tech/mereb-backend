@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    environment {
+        MAVEN_HOME = tool 'Maven 3'  // Assumes Maven is installed in Jenkins
+        PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
+        SLACK_WEBHOOK_URL = credentials('slack-webhook')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/rmhy-tech/mereb-backend.git',
+                    credentialsId: '4d8184fd-ce71-4cb5-a166-45bb06ec67cc' // Update with your credentials ID
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn clean package -DskipTests"  // Build without running tests
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn test"  // Run unit tests
+                }
+            }
+        }
+
+        stage('Publish Artifact') {
+            steps {
+                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: false
+                // Alternatively, push Docker images to Docker Hub (optional)
+                // sh 'docker build -t your-docker-hub-repo/user-service .'
+                // sh 'docker push your-docker-hub-repo/user-service:latest'
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                // Send a success message to Slack
+                sh """
+                    curl -X POST -H "Content-type: application/json" \
+                    --data "{\\"text\\": \\"✅ *CI Build SUCCESS* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
+            echo 'Build and Tests for user-service completed successfully.'
+        }
+        failure {
+            script {
+                // Send a failure message to Slack
+                sh """
+                    curl -X POST -H "Content-type: application/json" \
+                    --data "{\\"text\\": \\"❌ *CI Build FAILURE* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
+            echo 'Build or Tests for user-service failed.'
+        }
+    }
+}

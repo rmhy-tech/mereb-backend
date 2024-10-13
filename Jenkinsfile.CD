@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    environment {
+        PROJECT_DIR = 'user-service' // Path to the user-service project inside the monorepo
+        IMAGE_NAME = 'user-service'  // Local Docker image name for user-service
+        SLACK_WEBHOOK_URL = credentials('slack-webhook')
+    }
+
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    // Build the Docker image locally without pushing to a registry
+                    sh "docker build -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Stop and Remove Existing Container') {
+            steps {
+                script {
+                    // Stop and remove the existing container
+                    sh """
+                        docker ps -a -q --filter "name=user-service" | grep . && docker stop user-service || true
+                        docker ps -a -q --filter "name=user-service" | grep . && docker rm user-service || true
+                    """
+                }
+            }
+        }
+
+        stage('Deploy User Service with Docker Compose') {
+            steps {
+                script {
+                    // Use docker-compose to deploy the locally built Docker image
+                    sh """
+                        docker-compose up -d
+                    """
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    retry(5) {
+                        sleep 10
+                        // Ensure the user-service is running and healthy
+                        sh 'curl -f http://localhost:8082/actuator/health || exit 1'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                // Send a success message to Slack
+                sh """
+                    curl -X POST -H "Content-type: application/json" \
+                    --data "{\\"text\\": \\"✅ *CD Deployment SUCCESS* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
+            echo 'Deployment of user-service completed successfully.'
+        }
+        failure {
+            script {
+                // Send a failure message to Slack
+                sh """
+                    curl -X POST -H "Content-type: application/json" \
+                    --data "{\\"text\\": \\"❌ *CD Deployment FAILURE* for user-service\\n *Job*: ${env.JOB_NAME}\\n *Build Number*: ${env.BUILD_NUMBER}\\n *Duration*: ${currentBuild.durationString}\\n *Built By*: ${currentBuild.getBuildCauses()[0].userId ?: 'Automated Trigger'}\\n *Build URL*: ${env.BUILD_URL}\\"}" \
+                    ${SLACK_WEBHOOK_URL}
+                """
+            }
+            echo 'Deployment of user-service failed.'
+        }
+        always {
+            // Clean up dangling images
+            sh 'docker image prune -f'
+        }
+    }
+}

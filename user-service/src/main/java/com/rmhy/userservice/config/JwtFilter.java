@@ -22,24 +22,28 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
 
-            String username = jwtService.getClaimsFromToken(token).getSubject();
-
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                var user = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                System.out.println(authenticationToken);
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
+        // Check if Authorization header is present
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        String token = authHeader.substring(7);
+        String username = jwtService.getClaimsFromToken(token).getSubject();
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            var user = userDetailsService.loadUserByUsername(username);
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        }
+
         filterChain.doFilter(request, response);
     }
 
-    @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getServletPath().contains("api/users");
+        // Exclude only the authentication endpoints, not the user endpoints
+        return request.getServletPath().contains("api/v2/auth");
     }
 }
