@@ -1,14 +1,18 @@
 #!/bin/bash
 
-services=("user-service" "post-service" "mereb-web")
+services=("user-service" "post-service" "api-gateway")
 
 for service in "${services[@]}"
 do
     echo "Building and pushing $service"
     cd ./$service
+    ./mvnw clean package -DskipTests
     docker build -t leultewolde/$service:latest .
-    docker push leultewolde/$service:latest
+    # docker push leultewolde/$service:latest
     cd ..
 done
 
-echo "All services have been built and pushed to Docker Hub"
+docker-compose down
+docker-compose up -d
+
+echo "All services have been built and deployed to Docker Hub"

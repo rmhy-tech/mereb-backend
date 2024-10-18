@@ -1,0 +1,2 @@
+user-service:1.0.12
+post-service:1.0.0

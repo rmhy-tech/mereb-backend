@@ -1,6 +1,7 @@
 package com.rmhy.userservice.service.v2;
 
 import com.rmhy.userservice.dto.response.UserResponse;
+import com.rmhy.userservice.exception.UserNotFoundException;
 import com.rmhy.userservice.mapper.UserMapper;
 import com.rmhy.userservice.model.User;
 import com.rmhy.userservice.repository.UserRepository;
@@ -29,15 +30,6 @@ public class UserServiceV2 {
         return Optional.empty();
     }
 
-    public Optional<String> deleteUser(Long id) {
-        Optional<User> found = userRepository.findById(id);
-        if (found.isPresent()) {
-            userRepository.delete(found.get());
-            return Optional.of("User Deleted");
-        }
-        return Optional.empty();
-    }
-
     public Page<UserResponse> getAllUsers(int page, int size, String sortBy, String sortDirection) {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
 
@@ -46,5 +38,14 @@ public class UserServiceV2 {
         Page<User> userPage = userRepository.findAll(pageable);
 
         return userPage.map(mapper::toDto);
+    }
+
+    public String deleteUser(Long id) {
+        Optional<User> found = userRepository.findById(id);
+        if (found.isPresent()) {
+            userRepository.delete(found.get());
+            return "User Deleted";
+        }
+        throw new UserNotFoundException("User not found with id: " + id);
     }
 }

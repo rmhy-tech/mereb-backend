@@ -1,5 +1,7 @@
 package com.rmhy.userservice.config;
 
+import com.rmhy.userservice.service.v3.JwtServiceV3;
+import com.rmhy.userservice.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +18,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
+    private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
     @Override
@@ -30,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String username = jwtService.getClaimsFromToken(token).getSubject();
+        String username = jwtUtil.getClaimsFromToken(token).getSubject();
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             var user = userDetailsService.loadUserByUsername(username);
@@ -44,6 +46,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         // Exclude only the authentication endpoints, not the user endpoints
-        return request.getServletPath().contains("api/v2/auth");
+        return request.getServletPath().contains("api/v2/auth") || request.getServletPath().contains("api/v3/auth");
     }
 }

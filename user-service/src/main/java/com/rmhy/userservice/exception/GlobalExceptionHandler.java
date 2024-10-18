@@ -1,9 +1,11 @@
 package com.rmhy.userservice.exception;
 
 import com.rmhy.userservice.utils.ErrorResponse;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -23,11 +25,49 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        logger.error("Runtime exception: ", ex);
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .errorCode("INTERNAL_SERVER_ERROR")
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .timestamp(ZonedDateTime.now().toString())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex) {
+        logger.error("Invalid Token exception: ", ex);
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .errorCode("BAD_REQUEST")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .timestamp(ZonedDateTime.now().toString())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex) {
+        logger.error("Jwt Exception error: ", ex);
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .errorCode("UNAUTHORIZED")
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .timestamp(ZonedDateTime.now().toString())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(UserNotFoundException ex) {
@@ -67,7 +107,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleAuthenticationCredentialsNotFoundException(AuthenticationCredentialsNotFoundException ex) {
-        return new ErrorResponse("Authentication credentials not found","UNAUTHORIZED", HttpStatus.UNAUTHORIZED.value());
+        return new ErrorResponse("Authentication credentials not found", "UNAUTHORIZED", HttpStatus.UNAUTHORIZED.value());
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -91,13 +131,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         logger.error("Validation error: ", ex);
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
+        String errors = ex.getBindingResult().getAllErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.joining(", "));
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .message("Validation error")
@@ -105,6 +141,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .timestamp(ZonedDateTime.now().toString())
                 .build();
+
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("errors", errors);
         responseBody.put("errorResponse", errorResponse);
