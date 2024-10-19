@@ -3,6 +3,7 @@
         "colorlog",
         "dotenv",
         "leultewolde",
-        "levelname"
+        "levelname",
+        "mereb"
     ]
 }

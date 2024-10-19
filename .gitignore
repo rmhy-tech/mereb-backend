@@ -5,3 +5,5 @@ desktop.ini
 /.vscode
 /__pycache__
 /.idea
+services.yml
+.env.api

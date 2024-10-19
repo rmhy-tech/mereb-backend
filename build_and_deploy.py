@@ -1,21 +1,26 @@
 import subprocess
 import os
+import yaml
 import logging
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import time
 
-import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import colorlog
-from tqdm import tqdm
 
 # Load the custom .env file
-load_dotenv(dotenv_path='.env.services')
+# load_dotenv(dotenv_path='.env.services')
 
 # Retrieve environment (staging, production, etc.)
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')  # Default to 'development' if not set
+# ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')  # Default to 'development' if not set
+
+
+
+def load_yaml_config(filepath):
+    with open(filepath, 'r') as stream:
+        return yaml.safe_load(stream)
 
 # Set up colored logging with subdued colors for less important logs
 handler = colorlog.StreamHandler()
@@ -41,22 +46,58 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-# Custom JSON logging formatter for structured logging
-class JSONFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            "timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z'),
-            "level": record.levelname,
-            "message": record.getMessage(),
-            "service_name": getattr(record, "service_name", None),
-            "version": getattr(record, "version", None),
-            "event": getattr(record, "event", None),
-            "environment": ENVIRONMENT,
-        }
-        return json.dumps(log_record, indent=4)
 
 # Configuration for version file
 version_file = "versions.txt"
+
+# Function to generate dynamic Docker Compose
+def generate_docker_compose(services, environment):
+    """Generate a Docker Compose file dynamically for the services based on environment."""
+    compose = {
+        'services': {},
+        'networks': {
+            'mereb_app-network': {
+                'driver': 'bridge'
+            }
+        }
+    }
+
+    for service in services:
+        # Dynamic ports and environment variables
+        service_ports = service.get('ports', [])
+        service_environment = service.get('environment', [])
+        env_file = service.get('env_file', f'.env.{environment}')  # Use environment-specific .env file
+
+        tag = f"{service['version']}-{environment}"
+
+        if service["version"] == 'latest':
+            tag = f"{environment}-latest"
+
+        if environment == 'production':
+            tag = service['version']  # No environment tag for production
+
+        image = f'leultewolde/{service["name"]}:{tag}'
+
+        # Add service configuration
+        compose['services'][service['name']] = {
+            'image': image,
+            'container_name': service['name'],
+            'ports': service_ports,
+            'environment': service_environment,
+            'env_file': env_file,  # External environment file for each service
+            'networks': ['mereb_app-network']
+        }
+
+    # Write the generated Docker Compose to a file
+    compose_file = f'docker-compose.{environment}.yml'
+    if environment == 'production':
+            compose_file = 'docker-compose.yml'
+
+    with open(compose_file, 'w') as file:
+        yaml.dump(compose, file, default_flow_style=False)
+
+    logger.info(f"📝 Docker Compose file for {environment} environment generated as {compose_file}")
+    return compose_file
 
 def initialize_version_file():
     """Create the version file if it doesn't exist."""
@@ -126,7 +167,7 @@ def read_version_data():
                     version_data[service] = version
     return version_data
 
-def process_service(service, version_data):
+def process_service(service, version_data, environment):
     """Process building, tagging, and pushing Docker images for a service."""
     logger.info(f"🚧 Processing {service}", extra={"event": "process_service", "service_name": service})
     start_time = time.time()
@@ -149,10 +190,10 @@ def process_service(service, version_data):
 
         # Step 4: Build, tag, and push the Docker image with environment-specific tags
         logger.info(f"🚀 Building and pushing Docker image for {service}", extra={"event": "docker_build_push", "service_name": service})
-        run_command(f"docker build -t leultewolde/{service}:{new_version}-{ENVIRONMENT} .", service_name=service, event="build_docker_image")
-        run_command(f"docker tag leultewolde/{service}:{new_version}-{ENVIRONMENT} leultewolde/{service}:{ENVIRONMENT}-latest", service_name=service, event="tag_docker_image")
-        run_command(f"docker push leultewolde/{service}:{new_version}-{ENVIRONMENT}", service_name=service, event="push_docker_image")
-        run_command(f"docker push leultewolde/{service}:{ENVIRONMENT}-latest", service_name=service, event="push_docker_image_latest")
+        run_command(f"docker build -t leultewolde/{service}:{new_version}-{environment} .", service_name=service, event="build_docker_image")
+        run_command(f"docker tag leultewolde/{service}:{new_version}-{environment} leultewolde/{service}:{environment}-latest", service_name=service, event="tag_docker_image")
+        run_command(f"docker push leultewolde/{service}:{new_version}-{environment}", service_name=service, event="push_docker_image")
+        run_command(f"docker push leultewolde/{service}:{environment}-latest", service_name=service, event="push_docker_image_latest")
 
         # Step 5: Update the version in memory
         version_data[service] = new_version
@@ -192,11 +233,16 @@ def get_docker_compose_file():
     logger.info(f"Using Docker Compose file: {compose_file}")
     return compose_file
 
+
 def main():
+    config = load_yaml_config('services.yml')
+    environment = config.get('environment', 'development')  # Default to development if not set
+    services = config.get('services', [])
+    
     initialize_version_file()
     
     # Get services from environment variables or command-line arguments
-    services = get_services()
+    # services = get_services()
     
     # Read version data from file
     version_data = read_version_data()
@@ -207,14 +253,14 @@ def main():
     #     for future in futures:
     #         future.result()  # Wait for all tasks to complete
     for service in services:
-        process_service(service, version_data)
+        process_service(service["name"], version_data, environment)
         save_version_to_file(version_data)
 
     # Save version data after all services are processed
     # save_version_to_file(version_data)
     
     # Get the dynamic Docker Compose file
-    compose_file = get_docker_compose_file()
+    compose_file = generate_docker_compose(services, environment)
 
     # Bring up Docker containers
     logger.info("🚢 Bringing up Docker containers", extra={"event": "docker_compose_up"})
