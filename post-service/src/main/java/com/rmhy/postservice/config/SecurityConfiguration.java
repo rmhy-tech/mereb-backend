@@ -34,8 +34,8 @@ public class SecurityConfiguration {
         return httpSecurity.csrf(CsrfConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/api/posts").authenticated()
-                        .requestMatchers("/api/posts/**").authenticated()
+                        .requestMatchers("/api/v1/posts").authenticated()
+                        .requestMatchers("/api/v1/posts/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll()
                 )

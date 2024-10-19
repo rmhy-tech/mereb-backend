@@ -202,13 +202,16 @@ def main():
     version_data = read_version_data()
 
     # Process each service in parallel
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(process_service, service, version_data) for service in services]
-        for future in futures:
-            future.result()  # Wait for all tasks to complete
+    # with ThreadPoolExecutor() as executor:
+    #     futures = [executor.submit(process_service, service, version_data) for service in services]
+    #     for future in futures:
+    #         future.result()  # Wait for all tasks to complete
+    for service in services:
+        process_service(service, version_data)
+        save_version_to_file(version_data)
 
     # Save version data after all services are processed
-    save_version_to_file(version_data)
+    # save_version_to_file(version_data)
     
     # Get the dynamic Docker Compose file
     compose_file = get_docker_compose_file()
