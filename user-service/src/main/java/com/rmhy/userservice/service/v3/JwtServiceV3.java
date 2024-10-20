@@ -30,6 +30,19 @@ public class JwtServiceV3 {
                 jwtUtil.generateRefreshToken(user),
                 new Date(System.currentTimeMillis() + jwtUtil.getRefreshTokenExpirationMs())
         );
+
+        Optional<RefreshToken> tokenEntityOpt = refreshTokenRepository.findByToken(refreshToken.getToken());
+        if (tokenEntityOpt.isPresent()) {
+            if (!tokenEntityOpt.get().isRevoked() && !isTokenExpired(tokenEntityOpt.get())) {
+                return tokenEntityOpt.get().getToken();
+            }
+            if (tokenEntityOpt.get().isRevoked() && !isTokenExpired(tokenEntityOpt.get())) {
+                tokenEntityOpt.get().setRevoked(false);
+                refreshTokenRepository.save(tokenEntityOpt.get());
+                return tokenEntityOpt.get().getToken();
+            }
+        }
+
         user.addRefreshToken(refreshToken);
         userRepository.save(user);
         return refreshToken.getToken();

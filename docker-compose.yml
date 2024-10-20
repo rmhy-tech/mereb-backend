@@ -4,33 +4,28 @@ networks:
 services:
   api-gateway:
     container_name: api-gateway
-    env_file: .env.api
-    environment:
-    - ENV=production
-    image: leultewolde/api-gateway:latest
+    image: leultewolde/api-gateway:production-latest
     networks:
     - mereb_app-network
     ports:
     - 8084:8084
   post-service:
     container_name: post-service
-    env_file: .env
     environment:
     - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
     - USER_SERVICE_GET_USER_URL=http://user-service:8082/api/v2/users
-    - SPRING_PROFILES_ACTIVE=prod
-    image: leultewolde/post-service:latest
+    - SPRING_PROFILES_ACTIVE=test
+    image: leultewolde/post-service:production-latest
     networks:
     - mereb_app-network
     ports:
     - 8083:8083
   user-service:
     container_name: user-service
-    env_file: .env
     environment:
     - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
-    - SPRING_PROFILES_ACTIVE=prod
-    image: leultewolde/user-service:latest
+    - SPRING_PROFILES_ACTIVE=test
+    image: leultewolde/user-service:production-latest
     networks:
     - mereb_app-network
     ports:

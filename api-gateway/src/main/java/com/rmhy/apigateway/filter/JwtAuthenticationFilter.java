@@ -28,7 +28,10 @@ public class JwtAuthenticationFilter implements WebFilter {
     private static final List<String> PUBLIC_ROUTES = Arrays.asList(
             "/user-service/api/auth/.*",
             "/user-service/api/v2/auth/.*",
-            "/user-service/api/v3/auth/.*"
+            "/user-service/api/v3/auth/.*",
+            "/user-service/actuator/health",
+            "/post-service/actuator/health",
+            "/actuator/health"
     );
 
     @Override

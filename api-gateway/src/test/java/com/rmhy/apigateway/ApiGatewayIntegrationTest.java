@@ -28,12 +28,12 @@ public class ApiGatewayIntegrationTest {
 
     @RegisterExtension
     static WireMockExtension userServiceMock = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(8082))
+            .options(WireMockConfiguration.wireMockConfig().port(82))
             .build();
 
     @RegisterExtension
     static WireMockExtension postServiceMock = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(8083))
+            .options(WireMockConfiguration.wireMockConfig().port(83))
             .build();
 
     @Value("${jwt.secretKey}")
@@ -79,7 +79,7 @@ public class ApiGatewayIntegrationTest {
     @Test
     public void testPublicRouteNoTokenRequired() {
         // Arrange: Set up WireMock for a public endpoint in the user-service
-        userServiceMock.stubFor(get(urlEqualTo("/user-service/api/auth/info"))
+        userServiceMock.stubFor(get(urlEqualTo("/api/auth/info"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"message\": \"Public Info\"}")
@@ -94,13 +94,13 @@ public class ApiGatewayIntegrationTest {
                 .jsonPath("$.message").isEqualTo("Public Info");
 
         // Assert: Verify that WireMock received the request
-        userServiceMock.verify(getRequestedFor(urlEqualTo("/user-service/api/auth/info")));
+        userServiceMock.verify(getRequestedFor(urlEqualTo("/api/auth/info")));
     }
 
     @Test
     public void testPublicRouteVersionedNoTokenRequired() {
         // Arrange: Set up WireMock for versioned public endpoint
-        userServiceMock.stubFor(get(urlEqualTo("/user-service/api/v3/auth/details"))
+        userServiceMock.stubFor(get(urlEqualTo("/api/v3/auth/details"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"message\": \"Public V3 Info\"}")
@@ -115,7 +115,7 @@ public class ApiGatewayIntegrationTest {
                 .jsonPath("$.message").isEqualTo("Public V3 Info");
 
         // Assert: Verify that WireMock received the request
-        userServiceMock.verify(getRequestedFor(urlEqualTo("/user-service/api/v3/auth/details")));
+        userServiceMock.verify(getRequestedFor(urlEqualTo("/api/v3/auth/details")));
     }
 
     // -----------------------------------
@@ -125,7 +125,7 @@ public class ApiGatewayIntegrationTest {
     @Test
     public void testProtectedRouteWithValidToken() {
         // Arrange: Set up WireMock for a protected endpoint in the user-service
-        userServiceMock.stubFor(get(urlEqualTo("/user-service/protected/data"))
+        userServiceMock.stubFor(get(urlEqualTo("/protected/data"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"message\": \"Protected Data\"}")
@@ -141,7 +141,7 @@ public class ApiGatewayIntegrationTest {
                 .jsonPath("$.message").isEqualTo("Protected Data");
 
         // Assert: Verify that WireMock received the request
-        userServiceMock.verify(getRequestedFor(urlEqualTo("/user-service/protected/data")));
+        userServiceMock.verify(getRequestedFor(urlEqualTo("/protected/data")));
     }
 
     @Test
@@ -187,7 +187,7 @@ public class ApiGatewayIntegrationTest {
     @Test
     public void testServiceErrorReturnsBadGateway() {
         // Arrange: Set up WireMock for user-service to return a 500 Internal Server Error
-        userServiceMock.stubFor(get(urlEqualTo("/user-service/protected/data"))
+        userServiceMock.stubFor(get(urlEqualTo("/protected/data"))
                 .willReturn(aResponse().withStatus(500)));
 
         // Act: Make a request to the user-service
