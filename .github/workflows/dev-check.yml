@@ -23,7 +23,7 @@ jobs:
       - name: Test project
         run: |
           chmod +x mereb.sh
-          ./mereb.sh mvn-test --env=dev 2> $GITHUB_WORKSPACE/build_error.log || true
+          ./mereb.sh mvn-test --env=dev
         shell: bash
 
       - name: Send Telegram message on success
