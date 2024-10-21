@@ -27,10 +27,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build and push Docker images
-        run: ./mereb build --env=staging
+        run: ./mereb.sh build --env=staging
 
       - name: Generate docker-compose.yml
-        run: ./mereb compose --env=staging
+        run: ./mereb.sh compose --env=staging
 
       - name: Copy docker-compose.staging.yml to Linode instance
         uses: appleboy/scp-action@v0.1.0

@@ -21,7 +21,7 @@ jobs:
           java-version: '17'
 
       - name: Test project
-        run: ./mereb mvn-verify --env=dev
+        run: ./mereb.sh mvn-verify --env=dev
 
       - name: Send Telegram message on success
         if: success()
