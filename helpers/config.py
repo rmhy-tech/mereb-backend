@@ -6,8 +6,19 @@ import yaml
 from helpers.get_logging import logger
 
 def load_yaml_config(filepath):
-    with open(filepath, 'r') as stream:
-        return yaml.safe_load(stream)
+    """Load YAML configuration from a file."""
+    try:
+        with open(filepath, 'r') as stream:
+            return yaml.safe_load(stream)
+    except FileNotFoundError:
+        logger.error(f"Configuration file not found: {filepath}")
+        raise  # Re-raise exception to be caught higher up if needed
+    except yaml.YAMLError as e:
+        logger.error(f"Error parsing YAML file: {filepath} - {e}")
+        raise  # Re-raise exception to be caught higher up if needed
+    except Exception as e:
+        logger.error(f"Unexpected error while loading YAML file: {filepath} - {e}")
+        raise  # Re-raise exception to be caught higher up if needed
 
 class ServiceNotFoundError(Exception):
     """Custom exception for missing items."""
@@ -67,20 +78,30 @@ def get_arguments():
 
 def load_config():
     """Load configuration from YAML file."""
-    config_file_name, command, services_requested = get_arguments()
-    config_file = os.getenv('CONFIG_FILE', f'./build-config/{config_file_name}')  # Default to 'services.yml'
-    logger.info(f"Using configuration file: {config_file}")
+    try:
+        config_file_name, command, services_requested = get_arguments()
+        config_file = os.getenv('CONFIG_FILE', f'./build-config/{config_file_name}')  # Default to 'services.yml'
+        logger.info(f"Using configuration file: {config_file}")
 
-    configs = load_yaml_config(config_file)
-    environment = configs.get('environment', 'development')
+        configs = load_yaml_config(config_file)
+        environment = configs.get('environment', 'development')
 
-    services_from_config = configs.get('services', [])
-    services = find_services(services_from_config, services_requested)
+        services_from_config = configs.get('services', [])
+        services = find_services(services_from_config, services_requested)
 
-    postman_key = configs.get('postman-apiKey', '')
-    postman_collection = configs.get('postman-collection', '')
+        postman_key = configs.get('postman-apiKey', '')
+        postman_collection = configs.get('postman-collection', '')
 
-    services_yml = find_services_from_yml(services_from_config, services)
+        services_yml = find_services_from_yml(services_from_config, services)
 
-    return services, services_yml, command, environment, postman_key, postman_collection
+        return services, services_yml, command, environment, postman_key, postman_collection
+    except FileNotFoundError as e:
+        logger.error(f"Configuration file not found or path is incorrect: {e}")
+        raise
+    except ServiceNotFoundError as e:
+        logger.error(f"One or more services not found: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error loading configuration: {e}")
+        raise
 

@@ -1,4 +1,5 @@
 import os
+import sys
 
 from helpers.config import load_config, ServiceNotFoundError
 from helpers.docker_compose import run_docker_compose, destroy_docker_compose, generate_docker_compose
@@ -34,8 +35,9 @@ def main():
             run_docker_compose(services_yml, environment)
         elif command == 'down':
             destroy_docker_compose()
-    except ServiceNotFoundError as e:
-        logger.error(f"❌ An error occurred: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

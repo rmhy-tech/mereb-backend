@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import time
+import sys
 
 from helpers.docker_manager import DockerManager
 from helpers.get_logging import logger
@@ -39,10 +40,12 @@ def run_command(command, ignore_errors=False, service_name=None, event=None):
                 logger.warning(f"❌ Command failed: {command}", extra={"event": event, "service_name": service_name})
             else:
                 logger.error(f"❌ Command failed: {command}", extra={"event": event, "service_name": service_name})
-                exit(1)
+                sys.exit(1)
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Error occurred during command execution: {command} : {e}",
                      extra={"event": event, "service_name": service_name})
+        if not ignore_errors:
+            sys.exit(1)
 
 
 def get_mvn_wrapper():
@@ -58,6 +61,8 @@ def get_mvn_wrapper():
 
 def run_maven_command(command, service_name=None, event=None):
     wrapper = get_mvn_wrapper()
+    if wrapper == "./mvnw":
+        run_command(f"chmod +x {wrapper}", service_name=service_name, event=event)
     run_command(f"{wrapper} {command}", service_name=service_name, event=event)
 
 
