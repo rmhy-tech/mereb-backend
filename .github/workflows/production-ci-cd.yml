@@ -27,7 +27,9 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build and push Docker images
-        run: ./mereb.sh build --env=prod
+        run: |
+          chmod +x mereb.sh
+          ./mereb.sh build --env=prod
 
       - name: Generate docker-compose.yml
         run: ./mereb.sh compose --env=prod
