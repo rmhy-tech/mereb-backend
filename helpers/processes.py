@@ -25,24 +25,35 @@ def format_output(output, max_lines=10):
 
 # Minimal, interactive Maven/Docker logs
 def run_command(command, ignore_errors=False, service_name=None, event=None):
-    """Run a shell command and optionally ignore errors."""
+    """Run a shell command and optionally ignore errors with interactive output logging."""
     logger.debug(f"🚀 Running command: {command}", extra={"event": event, "service_name": service_name})
 
     try:
-        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.stdout:
-            cleaned_output = format_output(result.stdout, max_lines=20)
-            logger.debug(f"📋 {event} Output:\n{cleaned_output}", extra={"event": event, "service_name": service_name})
-        if result.returncode == 0:
-            logger.info(f"✅ Command succeeded: {command}", extra={"event": event, "service_name": service_name})
-        else:
-            if ignore_errors:
-                logger.warning(f"❌ Command failed: {command}", extra={"event": event, "service_name": service_name})
+        # Open the command using Popen for real-time streaming of stdout and stderr
+        with subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as process:
+            # Stream stdout
+            for stdout_line in iter(process.stdout.readline, ""):
+                logger.info(stdout_line.strip(), extra={"event": event, "service_name": service_name})
+            process.stdout.close()
+
+            # Stream stderr
+            for stderr_line in iter(process.stderr.readline, ""):
+                logger.error(stderr_line.strip(), extra={"event": event, "service_name": service_name})
+            process.stderr.close()
+
+            # Wait for the process to complete and get the exit code
+            return_code = process.wait()
+
+            if return_code == 0:
+                logger.info(f"✅ Command succeeded: {command}", extra={"event": event, "service_name": service_name})
             else:
-                logger.error(f"❌ Command failed: {command}", extra={"event": event, "service_name": service_name})
-                sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Error occurred during command execution: {command} : {e}",
+                if ignore_errors:
+                    logger.warning(f"⚠️ Command failed but continuing: {command}", extra={"event": event, "service_name": service_name})
+                else:
+                    logger.error(f"❌ Command failed: {command} (Exit Code: {return_code})", extra={"event": event, "service_name": service_name})
+                    sys.exit(1)
+    except Exception as e:
+        logger.error(f"❌ Error occurred during command execution: {command} - {e}",
                      extra={"event": event, "service_name": service_name})
         if not ignore_errors:
             sys.exit(1)

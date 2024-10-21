@@ -25,7 +25,7 @@ jobs:
           chmod +x mereb.sh
           ./mereb.sh mvn-test --env=dev
         shell: bash
-        
+
       - name: Send Telegram message on success
         if: success()
         run: |
@@ -44,7 +44,11 @@ jobs:
       - name: Send Telegram message on failure
         if: failure()
         run: |
-          ERROR_LOG=$(cat $GITHUB_WORKSPACE/build_error.log)
+          if [ -f "$GITHUB_WORKSPACE/build_error.log" ]; then
+            ERROR_LOG=$(cat $GITHUB_WORKSPACE/build_error.log)
+          else
+            ERROR_LOG="No error log found."
+          fi
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d text="❌ *Push to `dev` Failed* 🔴
@@ -56,9 +60,3 @@ jobs:
             *Commit Message:* ${{ github.event.head_commit.message }}
             *Author:* ${{ github.actor }}
             *Error Log:* \n\`\`\`${ERROR_LOG}\`\`\`"
-
-      - name: Save error logs for failure
-        if: failure()
-        run: |
-          echo "Saving error logs..."
-          mvn --errors > $GITHUB_WORKSPACE/build_error.log 2>&1
