@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 VENV_DIR=".venv"
 
@@ -23,7 +24,7 @@ else
 fi
 
 # Run the Python script with arguments
-python "$(dirname "$0")/mereb.py" "$@"
+python "$(dirname "$0")/mereb.py" "$@" || { echo "Python script execution failed."; exit 1; }
 
 # Deactivate the virtual environment
 deactivate

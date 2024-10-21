@@ -11,13 +11,13 @@ def load_yaml_config(filepath):
         with open(filepath, 'r') as stream:
             return yaml.safe_load(stream)
     except FileNotFoundError:
-        logger.error(f"Configuration file not found: {filepath}")
+        logger.error(f"❌ Configuration file not found: {filepath}")
         raise  # Re-raise exception to be caught higher up if needed
     except yaml.YAMLError as e:
-        logger.error(f"Error parsing YAML file: {filepath} - {e}")
+        logger.error(f"❌ Error parsing YAML file: {filepath} - {e}")
         raise  # Re-raise exception to be caught higher up if needed
     except Exception as e:
-        logger.error(f"Unexpected error while loading YAML file: {filepath} - {e}")
+        logger.error(f"❌ Unexpected error while loading YAML file: {filepath} - {e}")
         raise  # Re-raise exception to be caught higher up if needed
 
 class ServiceNotFoundError(Exception):
@@ -96,12 +96,12 @@ def load_config():
 
         return services, services_yml, command, environment, postman_key, postman_collection
     except FileNotFoundError as e:
-        logger.error(f"Configuration file not found or path is incorrect: {e}")
+        logger.error(f"❌ Configuration file not found or path is incorrect: {e}")
         raise
     except ServiceNotFoundError as e:
-        logger.error(f"One or more services not found: {e}")
+        logger.error(f"❌ One or more services not found: {e}")
         raise
     except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
+        logger.error(f"❌ Error loading configuration: {e}")
         raise
 

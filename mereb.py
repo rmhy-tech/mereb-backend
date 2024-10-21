@@ -35,8 +35,14 @@ def main():
             run_docker_compose(services_yml, environment)
         elif command == 'down':
             destroy_docker_compose()
+        else:
+            logger.error(f"❌ Unknown command: {command}")
+            sys.exit(1)
+    except ServiceNotFoundError as e:
+        logger.error(f"❌ Service not found: {e}")
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(f"❌ An error occurred: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
