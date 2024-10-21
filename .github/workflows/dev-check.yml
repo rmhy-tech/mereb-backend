@@ -23,7 +23,7 @@ jobs:
       - name: Test project
         run: |
           chmod +x mereb.sh
-          ./mereb.sh mvn-verify --env=dev
+          ./mereb.sh mvn-test --env=dev
 
       - name: Send Telegram message on success
         if: success()
