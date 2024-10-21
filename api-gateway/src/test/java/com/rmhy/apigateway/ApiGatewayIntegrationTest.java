@@ -28,12 +28,12 @@ public class ApiGatewayIntegrationTest {
 
     @RegisterExtension
     static WireMockExtension userServiceMock = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(82))
+            .options(WireMockConfiguration.wireMockConfig().port(6082))
             .build();
 
     @RegisterExtension
     static WireMockExtension postServiceMock = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(83))
+            .options(WireMockConfiguration.wireMockConfig().port(6083))
             .build();
 
     @Value("${jwt.secretKey}")
