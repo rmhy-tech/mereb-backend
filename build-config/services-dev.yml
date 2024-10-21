@@ -5,7 +5,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=test
       - USER_SERVICE_URL=http://user-service:8082
       - POST_SERVICE_URL=http://post-service:8083
     healthcheck:
