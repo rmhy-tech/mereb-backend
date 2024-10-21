@@ -117,6 +117,7 @@ def package_and_build_docker_image(service_name, version, environment):
     logger.info(f"🛠️ Building Docker image for {service_name}",
                 extra={"event": "docker_build", "service_name": service_name})
     run_command(f"docker build -t {image_name} .", service_name=service_name, event="build_docker_image")
+    run_command(f"docker build -t {image_name} .", service_name=service_name, event="build_docker_image")
 
     return image_name, image_name_latest
 
@@ -124,14 +125,10 @@ def package_and_build_docker_image(service_name, version, environment):
 def build_and_push_docker_images(service_name, version, environment):
     image_name, image_name_latest = package_and_build_docker_image(service_name, version, environment)
 
-    logger.info(f"🚀 Pushing Docker image for {service_name}",
-                extra={"event": "docker_build_push", "service_name": service_name})
-    run_command(f"docker build -t {image_name} .", service_name=service_name, event="build_docker_image")
-    run_command(f"docker tag {image_name} {image_name_latest}", service_name=service_name,
-                event="tag_docker_image")
+    logger.info(f"🚀 Pushing Docker image for {service_name}",extra={"event": "docker_build_push", "service_name": service_name})
+    run_command(f"docker tag {image_name} {image_name_latest}", service_name=service_name, event="tag_docker_image")
     run_command(f"docker push {image_name}", service_name=service_name, event="push_docker_image")
-    run_command(f"docker push {image_name_latest}", service_name=service_name,
-                event="push_docker_image_latest")
+    run_command(f"docker push {image_name_latest}", service_name=service_name, event="push_docker_image_latest")
 
 
 def process_build_and_deploy(service_name, environment):

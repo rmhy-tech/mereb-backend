@@ -1,0 +1,71 @@
+name: Weekly Staging to Main Merge
+
+on:
+  schedule:
+    # Runs every Friday at 00:00 UTC
+    - cron: '0 0 * * 5'
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history so we can compare branches
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if there are changes between staging and main
+        id: check_changes
+        run: |
+          git fetch origin main:main
+          git fetch origin staging:staging
+          git checkout main
+          git merge --no-commit --no-ff staging || git reset --hard
+        continue-on-error: true
+
+      - name: Merge staging into main if changes exist
+        if: success()
+        run: |
+          git merge --no-ff staging --no-edit
+          git push origin main
+
+      - name: Send Telegram message on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="✅ *Auto-Merge staging->main Succeeded* 🚀
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Send Telegram message on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="❌ *Auto-Merge staging->main Failed* 🔴
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

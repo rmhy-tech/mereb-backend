@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.ignored" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/api-gateway/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/api-gateway/target" />
+      <excludeFolder url="file://$MODULE_DIR$/post-service/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/post-service/target" />
+      <excludeFolder url="file://$MODULE_DIR$/user-service/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/user-service/target" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

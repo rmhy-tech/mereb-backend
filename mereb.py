@@ -1,7 +1,7 @@
 import os
 
 from helpers.config import load_config, ServiceNotFoundError
-from helpers.docker_compose import run_docker_compose, destroy_docker_compose
+from helpers.docker_compose import run_docker_compose, destroy_docker_compose, generate_docker_compose
 from helpers.get_logging import logger
 from helpers.processes import package_all_services, clean_all_services, \
     verify_all_services, build_and_deploy_all_services, maven_test_all_services
@@ -22,10 +22,14 @@ def main():
             verify_all_services(services, os.getcwd())
         elif command == 'test':
             test_all_services(services, postman_key, postman_collection)
+        elif command == 'build':
+            build_and_deploy_all_services(services, environment, os.getcwd())
         elif command == 'deploy':
             build_and_deploy_all_services(services, environment, os.getcwd())
             run_docker_compose(services_yml, environment)
             test_all_services(services, postman_key, postman_collection)
+        elif command == 'compose':
+            generate_docker_compose(services_yml, environment)
         elif command == 'up':
             run_docker_compose(services_yml, environment)
         elif command == 'down':

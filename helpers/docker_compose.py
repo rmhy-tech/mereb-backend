@@ -24,18 +24,33 @@ def generate_docker_compose(services, environment):
         if service["version"] == 'latest' and environment != 'production':
             tag = f"{environment}-latest"
 
-        env_file = {'env_file': service.get('env_file', f'.env.{environment}')} if environment == 'production' else {}
+        env_file = {'env_file': service['env_file']} if service.get('env_file') else {}
+
+        healthcheck = service.get('healthcheck', {})
+        formatted_healthcheck = {
+            "test": healthcheck.get("test", []),
+            "interval": healthcheck.get("interval", "30s"),
+            "timeout": healthcheck.get("timeout", "10s"),
+            "retries": healthcheck.get("retries", 3),
+            "start_period": healthcheck.get("start_period", "10s")
+        } if healthcheck else None
+
+        if formatted_healthcheck and isinstance(formatted_healthcheck.get("test"), list):
+            formatted_healthcheck["test"] = [str(cmd) for cmd in formatted_healthcheck["test"]]
 
         service_definition = {
             'image': f'leultewolde/{service["name"]}:{tag}',
             'container_name': service['name'],
             'ports': service_ports,
             'environment': service_environment,
-            'networks': ['mereb_app-network'],
-            'healthcheck': service.get('healthcheck')
+            'networks': ['mereb_app-network']
         }
 
-        service_definition.update(env_file)
+        if env_file:
+            service_definition.update(env_file)
+
+        if formatted_healthcheck:
+            service_definition['healthcheck'] = formatted_healthcheck
 
         compose['services'][service['name']] = service_definition
 
