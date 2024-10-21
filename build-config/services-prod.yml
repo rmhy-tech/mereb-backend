@@ -1,0 +1,45 @@
+environment: production
+services:
+  - name: api-gateway
+    version: latest
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - USER_SERVICE_URL=http://user-service:8082
+      - POST_SERVICE_URL=http://post-service:8083
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+  - name: user-service
+    version: latest
+    ports:
+      - "8082:8082"
+    environment:
+      - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
+      - SPRING_PROFILES_ACTIVE=prod
+    env_file: .env
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+  - name: post-service
+    version: latest
+    ports:
+      - "8083:8083"
+    environment:
+      - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
+      - USER_SERVICE_GET_USER_URL=http://user-service:8082/api/v2/users
+      - SPRING_PROFILES_ACTIVE=prod
+    env_file: .env
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

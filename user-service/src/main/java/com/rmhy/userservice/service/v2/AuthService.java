@@ -1,12 +1,12 @@
 package com.rmhy.userservice.service.v2;
 
-import com.rmhy.userservice.config.JwtService;
 import com.rmhy.userservice.dto.request.LoginRequest;
 import com.rmhy.userservice.dto.request.RegisterRequest;
 import com.rmhy.userservice.dto.response.AuthResponse;
 import com.rmhy.userservice.mapper.UserMapper;
 import com.rmhy.userservice.model.User;
 import com.rmhy.userservice.repository.UserRepository;
+import com.rmhy.userservice.service.v3.JwtServiceV3;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +21,7 @@ public class AuthService {
     private final UserRepository repository;
     private final UserMapper mapper;
 
-    private final JwtService jwtService;
+    private final JwtServiceV3 jwtService;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
@@ -32,7 +32,7 @@ public class AuthService {
 
         User savedUser = repository.save(newUser);
 
-        String token = jwtService.generateToken(savedUser);
+        String token = jwtService.generateAccessToken(savedUser);
 
         return new AuthResponse(token);
     }
@@ -45,7 +45,7 @@ public class AuthService {
 
         var user = userDetailsService.loadUserByUsername(request.getUsername());
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken((User) user);
 
         return new AuthResponse(token);
     }

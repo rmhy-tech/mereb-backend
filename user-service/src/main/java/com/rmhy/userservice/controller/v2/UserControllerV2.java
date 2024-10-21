@@ -22,13 +22,6 @@ public class UserControllerV2 {
         return ResponseEntity.ok(user);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
-        String resp = userServiceV2.deleteUser(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
-        return ResponseEntity.ok(resp);
-    }
-
     @GetMapping
     public ResponseEntity<Page<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -39,5 +32,10 @@ public class UserControllerV2 {
         Page<UserResponse> usersPage = userServiceV2.getAllUsers(page, size, sortBy, sortDirection);
 
         return ResponseEntity.ok(usersPage);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userServiceV2.deleteUser(id));
     }
 }

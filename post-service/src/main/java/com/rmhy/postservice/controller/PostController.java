@@ -2,67 +2,56 @@ package com.rmhy.postservice.controller;
 
 import com.rmhy.postservice.dto.PostRequest;
 import com.rmhy.postservice.dto.PostResponse;
-import com.rmhy.postservice.dto.UserDTO;
 import com.rmhy.postservice.service.PostService;
 import com.rmhy.postservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
 
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 public class PostController {
-    @Value("${user-service.url}")
-    private String userServiceUrl;
     private final PostService postService;
     private final JwtUtil jwtUtil;
-    private final RestTemplate restTemplate;
-
-    @GetMapping
-    public ResponseEntity<List<PostResponse>> getPosts() {
-        List<PostResponse> posts = postService.getPosts();
-        return ResponseEntity.ok(posts);
-    }
 
     @PostMapping
     public ResponseEntity<PostResponse> createPost(@RequestBody PostRequest postRequest, HttpServletRequest request) {
-        String username = jwtUtil.getUsernameFromRequest(request);
-        Long userId = getUserIdFromUsername(username);
-        postRequest.setUserId(userId);
-        postRequest.setUsername(username);
-        PostResponse createdPost = postService.create(postRequest);
+        String token = jwtUtil.getTokenFromRequest(request);
+
+        PostResponse createdPost = postService.create(postRequest, token);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
     }
 
-    private Long getUserIdFromUsername(String username) {
-        String url = "http://" + userServiceUrl + "/api/users/" + username; // Replace with your user service URL
-        ResponseEntity<UserDTO> response = restTemplate.getForEntity(url, UserDTO.class);
-        if (response.getStatusCode() == HttpStatus.OK) {
-            UserDTO userDTO = response.getBody();
-            assert userDTO != null;
-            return userDTO.getId();
-        } else {
-            throw new UsernameNotFoundException("User not found");
-        }
+    @GetMapping
+    public ResponseEntity<Page<PostResponse>> getPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+        Page<PostResponse> posts = postService.getPosts(page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(posts);
     }
 
     @GetMapping("/users/{userId}")
-    public ResponseEntity<List<PostResponse>> getPostsByUser(@PathVariable Long userId) {
-        List<PostResponse> posts = postService.getPostsByUser(userId);
+    public ResponseEntity<Page<PostResponse>> getPostsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+        Page<PostResponse> posts = postService.getPostsByUser(userId, page, size, sortBy, sortDirection);
         return ResponseEntity.ok(posts);
     }
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId) {
-        postService.delete(postId);
-        return ResponseEntity.ok("Deleted");
+        return ResponseEntity.ok(postService.delete(postId));
     }
 }

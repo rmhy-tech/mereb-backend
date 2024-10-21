@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(req -> req
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v2/auth/**").permitAll()
+                        .requestMatchers("/api/v3/auth/**").permitAll()
                         .requestMatchers("/api/v2/users/**").authenticated()
                         .anyRequest().permitAll()
                 )
