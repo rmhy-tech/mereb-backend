@@ -39,8 +39,8 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          source: "docker-compose.yml"
+          key_path: /tmp/id_rsa
+          source: docker-compose.yml
           target: /mereb/prod
           overwrite: true
           debug: true
@@ -60,8 +60,8 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          source: ".env"
+          key_path: /tmp/id_rsa
+          source: .env
           target: /mereb/prod
           overwrite: true
           debug: true
@@ -77,17 +77,19 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
+          key_path: /tmp/id_rsa
           script: |
             cd /mereb/prod
             docker compose down
             docker compose -f docker-compose.yml up -d --build
+            
+
       - name: Wait for all services to be healthy
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
+          key_path: /tmp/id_rsa
           script: |
             echo "Checking health status for all services..."
             cd /mereb/prod
