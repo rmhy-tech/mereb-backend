@@ -40,8 +40,10 @@ jobs:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
           key: ${{ secrets.LINODE_SSH_KEY }}
-          source: docker-compose.staging.yml
+          source: "docker-compose.staging.yml"
           target: /mereb/staging
+          overwrite: true
+          debug: true
 
       - name: Create .env file
         run: |
@@ -59,8 +61,10 @@ jobs:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
           key: ${{ secrets.LINODE_SSH_KEY }}
-          source: .env
+          source: ".env"
           target: /mereb/staging
+          overwrite: true
+          debug: true
 
       - name: Cleanup .env file
         run: rm .env
