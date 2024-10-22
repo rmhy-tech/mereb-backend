@@ -49,16 +49,6 @@ jobs:
         run: |
           scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.staging.yml root@${{ secrets.LINODE_HOST }}:/mereb/staging
 
-      # - name: Copy docker-compose.staging.yml to Linode server
-      #   uses: appleboy/scp-action@v0.1.4
-      #   with:
-      #     host: ${{ secrets.LINODE_HOST }}
-      #     username: ${{ secrets.LINODE_USERNAME }}
-      #     key_path: /tmp/id_rsa  # Use the key path instead of the raw key
-      #     source: docker-compose.staging.yml
-      #     target: /mereb/staging
-      #     debug: true
-
       - name: Create .env file
         run: |
           echo "DB_URL=${{ secrets.DB_URL }}" >> .env
@@ -70,14 +60,8 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Copy .env to Linode instance
-        uses: appleboy/scp-action@v0.1.0
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
-          source: .env
-          target: /mereb/staging
-          debug: true
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/staging
 
       - name: Cleanup .env file
         run: rm .env
@@ -95,7 +79,7 @@ jobs:
             cd /mereb/staging
             docker compose down
             docker compose -f docker-compose.staging.yml up -d --build
-            
+
       - name: Wait for all services to be healthy
         uses: appleboy/ssh-action@v0.1.5
         with:
