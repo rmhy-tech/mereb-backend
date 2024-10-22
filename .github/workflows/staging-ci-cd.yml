@@ -39,8 +39,11 @@ jobs:
           echo "${{ secrets.LINODE_SSH_KEY }}" > /tmp/id_rsa
           chmod 600 /tmp/id_rsa
 
-      - name: Verify SSH key file
-        run: ls -la /tmp/id_rsa
+      - name: Check SSH key file exists and print first few lines
+        run: |
+          ls -la /tmp/id_rsa
+          echo "First few lines of the key:"
+          head -n 5 /tmp/id_rsa
 
       - name: Copy docker-compose.staging.yml to Linode server
         uses: appleboy/scp-action@v0.1.4
