@@ -34,15 +34,19 @@ jobs:
       - name: Generate docker-compose.yml
         run: ./mereb.sh compose --env=staging
 
-      - name: Copy docker-compose.staging.yml to Linode instance
-        uses: appleboy/scp-action@v0.1.0
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.LINODE_SSH_KEY }}" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+
+      - name: Copy docker-compose.staging.yml to Linode server
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          source: "docker-compose.staging.yml"
+          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
+          source: docker-compose.staging.yml
           target: /mereb/staging
-          overwrite: true
           debug: true
 
       - name: Create .env file
@@ -60,10 +64,9 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          source: ".env"
+          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
+          source: .env
           target: /mereb/staging
-          overwrite: true
           debug: true
 
       - name: Cleanup .env file
@@ -77,17 +80,18 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
+          key_path: /tmp/id_rsa
           script: |
             cd /mereb/staging
             docker compose down
             docker compose -f docker-compose.staging.yml up -d --build
+            
       - name: Wait for all services to be healthy
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
+          key_path: /tmp/id_rsa
           script: |
             echo "Checking health status for all services..."
             cd /mereb/staging
