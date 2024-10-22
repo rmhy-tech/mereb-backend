@@ -45,15 +45,19 @@ jobs:
           echo "First few lines of the key:"
           head -n 5 /tmp/id_rsa
 
-      - name: Copy docker-compose.staging.yml to Linode server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
-          source: docker-compose.staging.yml
-          target: /mereb/staging
-          debug: true
+      - name: Copy file using scp directly
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.staging.yml root@${{ secrets.LINODE_HOST }}:/mereb/staging
+
+      # - name: Copy docker-compose.staging.yml to Linode server
+      #   uses: appleboy/scp-action@v0.1.4
+      #   with:
+      #     host: ${{ secrets.LINODE_HOST }}
+      #     username: ${{ secrets.LINODE_USERNAME }}
+      #     key_path: /tmp/id_rsa  # Use the key path instead of the raw key
+      #     source: docker-compose.staging.yml
+      #     target: /mereb/staging
+      #     debug: true
 
       - name: Create .env file
         run: |
