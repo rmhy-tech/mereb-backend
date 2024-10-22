@@ -47,7 +47,7 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: ./tmp/id_rsa  # Use the key path instead of the raw key
+          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
           source: docker-compose.staging.yml
           target: /mereb/staging
           debug: true
@@ -67,7 +67,7 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: ./tmp/id_rsa  # Use the key path instead of the raw key
+          key_path: /tmp/id_rsa  # Use the key path instead of the raw key
           source: .env
           target: /mereb/staging
           debug: true
