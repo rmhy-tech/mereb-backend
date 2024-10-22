@@ -74,7 +74,7 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
+          key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             cd /mereb/staging
             docker compose down
@@ -85,7 +85,7 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
+          key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             echo "Checking health status for all services..."
             cd /mereb/staging
