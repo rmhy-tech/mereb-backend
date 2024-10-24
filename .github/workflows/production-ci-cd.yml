@@ -1,9 +1,6 @@
 name: Build, Push, and Deploy
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -38,16 +35,20 @@ jobs:
       - name: Generate docker-compose.yml
         run: builddeck --env=prod compose
 
-      - name: Copy docker-compose.yml to Linode instance
-        uses: appleboy/scp-action@v0.1.0
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
-          source: docker-compose.yml
-          target: /mereb/prod
-          overwrite: true
-          debug: true
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.LINODE_SSH_KEY }}" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+
+      - name: Check SSH key file exists and print first few lines
+        run: |
+          ls -la /tmp/id_rsa
+          echo "First few lines of the key:"
+          head -n 5 /tmp/id_rsa
+
+      - name: Copy file using scp directly
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.LINODE_HOST }}:/mereb/prod
 
       - name: Create .env file
         run: |
@@ -60,15 +61,8 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Copy .env to Linode instance
-        uses: appleboy/scp-action@v0.1.0
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
-          source: .env
-          target: /mereb/prod
-          overwrite: true
-          debug: true
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/prod
 
       - name: Cleanup .env file
         run: rm .env
@@ -81,19 +75,18 @@ jobs:
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
+          key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             cd /mereb/prod
             docker compose down
             docker compose -f docker-compose.yml up -d --build
-            
 
       - name: Wait for all services to be healthy
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.LINODE_HOST }}
           username: ${{ secrets.LINODE_USERNAME }}
-          key_path: /tmp/id_rsa
+          key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             echo "Checking health status for all services..."
             cd /mereb/prod
@@ -112,10 +105,12 @@ jobs:
                 sleep 10
               done
             done
+
       - uses: actions/checkout@v4
       - name: Install Postman CLI
         run: |
           curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
       - name: Login to Postman CLI
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
       - name: Run API tests
