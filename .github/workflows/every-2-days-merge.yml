@@ -23,8 +23,8 @@ jobs:
       - name: Check if there are changes between dev and staging
         id: check_changes
         run: |
-          git fetch origin staging:staging
-          git fetch origin dev:dev
+          git fetch origin dev
+          git fetch origin staging
           git checkout dev
           git merge --no-commit --no-ff origin/staging || git reset --hard
         continue-on-error: true
