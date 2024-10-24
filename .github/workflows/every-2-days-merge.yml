@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: staging
-          head: dev
+          branch: "auto-merge-dev-to-staging"  # This will be the branch name used for the PR
           title: "Auto-Merge: dev into staging"
           body: |
             This pull request was automatically created to merge the latest changes from `dev` into `staging`.
@@ -44,7 +44,7 @@ jobs:
       - name: Auto-merge the pull request
         if: success() && steps.create_pr.outputs.pull-request-number
         run: |
-          PR_NUMBER=$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")
+          PR_NUMBER=${{ steps.create_pr.outputs.pull-request-number }}
           gh pr merge $PR_NUMBER --squash --admin --repo "${{ github.repository }}" -y
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
