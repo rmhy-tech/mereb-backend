@@ -59,7 +59,7 @@ public class SecurityConfiguration {
         List<String> origins = originsList.isEmpty() ? List.of("*") : originsList;
         configuration.setAllowedOrigins(origins);
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "baggage", "sentry-trace"));  // Add necessary headers
         configuration.setAllowCredentials(true);
 
