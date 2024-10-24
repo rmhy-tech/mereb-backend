@@ -112,7 +112,7 @@ jobs:
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
       - name: Run API tests
         run: |
-          postman collection run "9308902-a9c05ea8-17a9-4138-bf27-5377ccffe73c" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
+          postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
 
       - name: Send Telegram message on success
         if: success()

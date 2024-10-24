@@ -1,7 +1,7 @@
 package com.rmhy.userservice.exception;
 
-public class UserAlreadyExists extends RuntimeException {
-  public UserAlreadyExists(String message) {
-    super(message);
-  }
+public class UserAlreadyExistsException extends RuntimeException {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
 }
