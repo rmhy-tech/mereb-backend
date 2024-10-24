@@ -5,7 +5,7 @@ desktop.ini
 /.vscode
 /__pycache__
 /.idea
-/build-config/services.yml
+/build-deck/services.yml
 .env.api
 
 /helpers/__pycache__
