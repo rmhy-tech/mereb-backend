@@ -1,6 +1,9 @@
-name: Build, Push, and Deploy
+name: Production Build, Push, and Deploy
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
