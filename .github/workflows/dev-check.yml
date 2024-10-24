@@ -20,10 +20,14 @@ jobs:
         with:
           java-version: '17'
 
+      - name: Set up Python and Install BuildDeck
+        uses: rmhy-tech/setup-builddeck@v1.0.1  # Reference your custom action here
+        with:
+          python-version: '3.9'
+
       - name: Test project
         run: |
-          chmod +x mereb.sh
-          ./mereb.sh mvn-test --env=dev
+          builddeck --env=dev mvn-test
         shell: bash
 
       - name: Send Telegram message on success

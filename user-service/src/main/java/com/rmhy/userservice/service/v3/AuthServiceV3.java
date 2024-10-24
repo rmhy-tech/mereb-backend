@@ -6,6 +6,7 @@ import com.rmhy.userservice.dto.request.RegisterRequest;
 import com.rmhy.userservice.dto.request.v3.TokenRefreshRequest;
 import com.rmhy.userservice.dto.response.v3.AuthResponseV3;
 import com.rmhy.userservice.dto.response.v3.TokenRefreshResponse;
+import com.rmhy.userservice.exception.UserAlreadyExistsException;
 import com.rmhy.userservice.exception.UserNotFoundException;
 import com.rmhy.userservice.mapper.UserMapper;
 import com.rmhy.userservice.model.User;
@@ -16,6 +17,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,14 @@ public class AuthServiceV3 {
     public AuthResponseV3 register(RegisterRequest request) {
         User newUser = mapper.toEntity(request);
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        Optional<User> existingUserByUsername = userRepository.findByUsername(newUser.getUsername());
+        if (existingUserByUsername.isPresent())
+            throw new UserAlreadyExistsException("User with username '"+newUser.getUsername()+"' already exists!");
+
+        Optional<User> existingUserByEmail = userRepository.findByEmail(newUser.getEmail());
+        if (existingUserByEmail.isPresent())
+            throw new UserAlreadyExistsException("User with email '"+newUser.getEmail()+"' already exists!");
 
         User savedUser = userRepository.save(newUser);
 
