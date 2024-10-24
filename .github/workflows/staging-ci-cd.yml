@@ -1,0 +1,151 @@
+name: Build, Push, and Deploy
+
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker images
+        run: |
+          chmod +x mereb.sh
+          ./mereb.sh build --env=staging
+
+      - name: Generate docker-compose.yml
+        run: ./mereb.sh compose --env=staging
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.LINODE_SSH_KEY }}" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+
+      - name: Check SSH key file exists and print first few lines
+        run: |
+          ls -la /tmp/id_rsa
+          echo "First few lines of the key:"
+          head -n 5 /tmp/id_rsa
+
+      - name: Copy file using scp directly
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.staging.yml root@${{ secrets.LINODE_HOST }}:/mereb/staging
+
+      - name: Create .env file
+        run: |
+          echo "DB_URL=${{ secrets.DB_URL }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Copy .env to Linode instance
+        run: |
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/staging
+
+      - name: Cleanup .env file
+        run: rm .env
+
+      - name: Cleanup docker-compose.staging.yml file
+        run: rm docker-compose.staging.yml
+
+      - name: SSH and Run Docker Compose
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.LINODE_HOST }}
+          username: ${{ secrets.LINODE_USERNAME }}
+          key: ${{ secrets.LINODE_SSH_KEY }}
+          script: |
+            cd /mereb/staging
+            docker compose down
+            docker compose -f docker-compose.staging.yml up -d --build
+
+      - name: Wait for all services to be healthy
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.LINODE_HOST }}
+          username: ${{ secrets.LINODE_USERNAME }}
+          key: ${{ secrets.LINODE_SSH_KEY }}
+          script: |
+            echo "Checking health status for all services..."
+            cd /mereb/staging
+            services=$(docker compose config --services)
+            for service in $services; do
+              for i in {1..10}; do
+                if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
+                  echo "$service is healthy!"
+                  break
+                fi
+                if [ "$i" -eq 10 ]; then
+                  echo "$service did not become healthy in time."
+                  exit 1
+                fi
+                echo "Waiting for $service to be healthy..."
+                sleep 10
+              done
+            done
+      - uses: actions/checkout@v4
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+      - name: Run API tests
+        run: |
+          postman collection run "9308902-a9c05ea8-17a9-4138-bf27-5377ccffe73c" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
+
+      - name: Send Telegram message on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="✅ *Staging Deployment Succeeded* 🚀
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Send Telegram message on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="❌ *Staging Deployment Failed* 🔴
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

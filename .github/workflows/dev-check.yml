@@ -1,0 +1,62 @@
+name: Build, Push, and Deploy
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      - name: Test project
+        run: |
+          chmod +x mereb.sh
+          ./mereb.sh mvn-test --env=dev
+        shell: bash
+
+      - name: Send Telegram message on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="✅ *Push to dev Succeeded* 🚀
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
+
+      - name: Send Telegram message on failure
+        if: failure()
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/build_error.log" ]; then
+            ERROR_LOG=$(cat $GITHUB_WORKSPACE/build_error.log)
+          else
+            ERROR_LOG="No error log found."
+          fi
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="❌ *Push to dev Failed* 🔴
+            *Repository:* ${{ github.repository }}
+            *Workflow:* ${{ github.workflow }}
+            *Job Name:* ${{ github.job }}
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Commit Message:* ${{ github.event.head_commit.message }}
+            *Author:* ${{ github.actor }}
+            *Error Log:* \n\`\`\`${ERROR_LOG}\`\`\`"
