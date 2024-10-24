@@ -21,7 +21,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Python and Install BuildDeck
-        uses: rmhy-tech/setup-builddeck@v1.0.0  # Reference your custom action here
+        uses: rmhy-tech/setup-builddeck@v1.0.1  # Reference your custom action here
         with:
           python-version: '3.9'
 
