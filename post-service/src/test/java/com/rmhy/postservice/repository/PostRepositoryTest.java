@@ -80,6 +80,26 @@ public class PostRepositoryTest {
     }
 
     @Test
+    public void testGetPostByPostId() {
+        Post post = new Post(
+                "Repository test post 3",
+                3L,
+                "test_user3"
+        );
+        Post savedPost = entityManager.persistAndFlush(post);
+
+        Optional<Post> foundPost = postRepository.findById(savedPost.getId());
+
+        assertTrue(foundPost.isPresent());
+        assertNotNull(foundPost.get().getId());
+        assertEquals(3L, foundPost.get().getUserId());
+        assertEquals("test_user3", foundPost.get().getUsername());
+        assertEquals("Repository test post 3", foundPost.get().getContent());
+        assertNotNull(foundPost.get().getCreatedAt());
+        assertNotNull(foundPost.get().getUpdatedAt());
+    }
+
+    @Test
     public void testGetPostsByUser() {
         Post post = new Post(
                 "Repository test post 3",
