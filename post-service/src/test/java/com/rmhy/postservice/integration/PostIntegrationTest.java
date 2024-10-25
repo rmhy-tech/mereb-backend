@@ -194,6 +194,28 @@ class PostIntegrationTest {
     }
 
     @Test
+    public void testGetPostByPostID() throws Exception {
+        PostRequest request = new PostRequest(123L, "test_user", "Test content");
+
+        PostResponse response = postService.create(request, "mockToken");
+
+        mockMvc.perform(get("/api/v1/posts/" + response.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.userId").isNotEmpty())
+                .andExpect(jsonPath("$.username").isNotEmpty())
+                .andExpect(jsonPath("$.content").value(request.getContent()))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.updatedAt").isNotEmpty());
+    }
+
+    @Test
+    public void testGetPostByPostID_InvalidID() throws Exception {
+        mockMvc.perform(get("/api/v1/posts/1234"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     public void testDeletePost() throws Exception {
         PostRequest request = new PostRequest(123L, "test_user", "Test content");
 
