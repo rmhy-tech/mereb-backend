@@ -96,8 +96,18 @@ jobs:
             key: ${{ secrets.LINODE_SSH_KEY }}
             script: |
               echo "Checking health status for all services..."
-              cd /mereb/staging
-              services=$(docker compose config --services)
+              cd /mereb/staging || { echo "Failed to change directory"; exit 1; }
+
+              # Specify the custom Docker Compose file name
+              COMPOSE_FILE="docker-compose.staging.yml"
+
+              # Check if the specified Docker Compose file exists
+              if [ ! -f "$COMPOSE_FILE" ]; then
+                echo "$COMPOSE_FILE file not found in $(pwd)"
+                exit 1
+              fi
+
+              services=$(docker compose -f "$COMPOSE_FILE" config --services)
               for service in $services; do
                 for i in {1..10}; do
                   if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
