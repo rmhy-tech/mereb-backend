@@ -86,39 +86,41 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-      - name: Wait for all services to be healthy
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          script: |
-            echo "Checking health status for all services..."
-            cd /mereb/staging
-            services=$(docker compose config --services)
-            for service in $services; do
-              for i in {1..10}; do
-                if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
-                  echo "$service is healthy!"
-                  break
-                fi
-                if [ "$i" -eq 10 ]; then
-                  echo "$service did not become healthy in time."
-                  exit 1
-                fi
-                echo "Waiting for $service to be healthy..."
-                sleep 10
+
+    steps:
+        - name: Wait for all services to be healthy
+          uses: appleboy/ssh-action@v0.1.5
+          with:
+            host: ${{ secrets.LINODE_HOST }}
+            username: ${{ secrets.LINODE_USERNAME }}
+            key: ${{ secrets.LINODE_SSH_KEY }}
+            script: |
+              echo "Checking health status for all services..."
+              cd /mereb/staging
+              services=$(docker compose config --services)
+              for service in $services; do
+                for i in {1..10}; do
+                  if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
+                    echo "$service is healthy!"
+                    break
+                  fi
+                  if [ "$i" -eq 10 ]; then
+                    echo "$service did not become healthy in time."
+                    exit 1
+                  fi
+                  echo "Waiting for $service to be healthy..."
+                  sleep 10
+                done
               done
-            done
-      - uses: actions/checkout@v4
-      - name: Install Postman CLI
-        run: |
-          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
-      - name: Login to Postman CLI
-        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
-      - name: Run API tests
-        run: |
-          postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
+        - uses: actions/checkout@v4
+        - name: Install Postman CLI
+          run: |
+            curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+        - name: Login to Postman CLI
+          run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+        - name: Run API tests
+          run: |
+            postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
 
   notify:
     runs-on: ubuntu-latest
@@ -132,7 +134,11 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="🚀 <strong>Success!</strong><blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b> \n<b>Repository:</b> <code>${{ github.repository }}</code> \n<b>Branch:</b> <code>${{ github.ref_name }}</code> \n<b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a></blockquote>"
+            -d text="✅ <strong>CD Success!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
+          <b>Repository:</b> <code>${{ github.repository }}</code>
+          <b>Branch:</b> <code>${{ github.ref_name }}</code>
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
 
       - name: Send Slack notification on failure
         if: failure()
@@ -140,4 +146,8 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="❌ <strong>Failed!</strong><blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b> \n<b>Repository:</b> <code>${{ github.repository }}</code> \n<b>Branch:</b> <code>${{ github.ref_name }}</code> \n<b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a></blockquote>"
+            -d text="❌ <strong>CD Failed!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
+          <b>Repository:</b> <code>${{ github.repository }}</code>
+          <b>Branch:</b> <code>${{ github.ref_name }}</code>
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
