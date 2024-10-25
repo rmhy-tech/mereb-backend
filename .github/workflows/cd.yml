@@ -107,16 +107,17 @@ jobs:
 
               services=$(docker compose -f "$COMPOSE_FILE" config --services)
               for service in $services; do
+                service_name="${service}-staging"
                 for i in {1..10}; do
-                  if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
-                    echo "$service is healthy!"
+                  if [ "$(docker inspect --format='{{.State.Health.Status}}' $service_name)" == "healthy" ]; then
+                    echo "$service_name is healthy!"
                     break
                   fi
                   if [ "$i" -eq 10 ]; then
-                    echo "$service did not become healthy in time."
+                    echo "$service_name did not become healthy in time."
                     exit 1
                   fi
-                  echo "Waiting for $service to be healthy..."
+                  echo "Waiting for $service_name to be healthy..."
                   sleep 10
                 done
               done
