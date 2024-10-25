@@ -67,6 +67,16 @@ jobs:
         run: |
           scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/prod
 
+      - name: Verify file transfer to Linode instance
+        run: |
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/prod/docker-compose.yml"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/prod/.env"
+
+      - name: Run Docker Compose commands on Linode instance
+        run: |
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/prod && docker compose down && docker compose -f docker-compose.yml up -d --build"
+
+
       - name: Cleanup .env file
         run: rm .env
 
