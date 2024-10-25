@@ -1,19 +1,17 @@
-name: Production Build, Push, and Deploy
+name: CD Pipeline
 
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - staging
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up JDK 17
         uses: actions/setup-java@v1
@@ -21,7 +19,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Python and Install BuildDeck
-        uses: rmhy-tech/setup-builddeck@v1.0.1  # Reference your custom action here
+        uses: rmhy-tech/setup-builddeck@v1.0.1
         with:
           python-version: '3.9'
 
@@ -33,10 +31,10 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          builddeck --env=prod build 
+          builddeck --env=staging build
 
       - name: Generate docker-compose.yml
-        run: builddeck --env=prod compose
+        run: builddeck --env=staging compose
 
       - name: Create SSH key file
         run: |
@@ -51,7 +49,7 @@ jobs:
 
       - name: Copy file using scp directly
         run: |
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.LINODE_HOST }}:/mereb/prod
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.staging.yml root@${{ secrets.LINODE_HOST }}:/mereb/staging
 
       - name: Create .env file
         run: |
@@ -65,13 +63,13 @@ jobs:
 
       - name: Copy .env to Linode instance
         run: |
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/prod
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/staging
 
       - name: Cleanup .env file
         run: rm .env
 
-      - name: Cleanup docker-compose.yml file
-        run: rm docker-compose.yml
+      - name: Cleanup docker-compose.staging.yml file
+        run: rm docker-compose.staging.yml
 
       - name: SSH and Run Docker Compose
         uses: appleboy/ssh-action@v0.1.5
@@ -80,10 +78,12 @@ jobs:
           username: ${{ secrets.LINODE_USERNAME }}
           key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
-            cd /mereb/prod
+            cd /mereb/staging
             docker compose down
-            docker compose -f docker-compose.yml up -d --build
+            docker compose -f docker-compose.staging.yml up -d --build
 
+  test:
+    runs-on: ubuntu-latest
       - name: Wait for all services to be healthy
         uses: appleboy/ssh-action@v0.1.5
         with:
@@ -92,8 +92,8 @@ jobs:
           key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             echo "Checking health status for all services..."
-            cd /mereb/prod
-            services=$(docker-compose config --services)
+            cd /mereb/staging
+            services=$(docker compose config --services)
             for service in $services; do
               for i in {1..10}; do
                 if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
@@ -108,50 +108,34 @@ jobs:
                 sleep 10
               done
             done
-
       - uses: actions/checkout@v4
       - name: Install Postman CLI
         run: |
           curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
-
       - name: Login to Postman CLI
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
       - name: Run API tests
         run: |
-          postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-2f7ffbfa-ea7c-4bb8-aa2f-83b5ec46f1f3"
+          postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
 
-      - name: Send Telegram message on success
+  notify:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+
+    steps:
+      - name: Send Telegram message on PR creation and merge success
         if: success()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="✅ *Production Deployment Succeeded* 🚀
-            *Repository:* ${{ github.repository }}
-            *Workflow:* ${{ github.workflow }}
-            *Job Name:* ${{ github.job }}
-            *Branch:* ${{ github.ref_name }}
-            *Commit:* ${{ github.sha }}
-            *Commit Message:* ${{ github.event.head_commit.message }}
-            *Author:* ${{ github.actor }}
-            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+            -d parse_mode="HTML" \
+            -d text="🚀 <strong>Success!</strong><blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b> \n<b>Repository:</b> <code>${{ github.repository }}</code> \n<b>Branch:</b> <code>${{ github.ref_name }}</code> \n<b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a></blockquote>"
 
-      - name: Send Telegram message on failure
+      - name: Send Slack notification on failure
         if: failure()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="❌ *Production Deployment Failed* 🔴
-            *Repository:* ${{ github.repository }}
-            *Workflow:* ${{ github.workflow }}
-            *Job Name:* ${{ github.job }}
-            *Branch:* ${{ github.ref_name }}
-            *Commit:* ${{ github.sha }}
-            *Commit Message:* ${{ github.event.head_commit.message }}
-            *Author:* ${{ github.actor }}
-            *Timestamp:* ${{ github.event.head_commit.timestamp }}"
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+            -d parse_mode="HTML" \
+            -d text="❌ <strong>Failed!</strong><blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b> \n<b>Repository:</b> <code>${{ github.repository }}</code> \n<b>Branch:</b> <code>${{ github.ref_name }}</code> \n<b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a></blockquote>"
