@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Docker Compose commands on Linode instance
         run: |
-          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/prod && docker compose down && docker compose -f docker-compose.yml up -d --build"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/prod && docker compose -f docker-compose.yml down && docker compose -f docker-compose.yml up -d --build"
 
 
       - name: Cleanup .env file
