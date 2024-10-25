@@ -67,22 +67,20 @@ jobs:
         run: |
           scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/staging
 
+      - name: Verify file transfer to Linode instance
+        run: |
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/staging/docker-compose.staging.yml"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/staging/.env"
+
+      - name: Run Docker Compose commands on Linode instance
+        run: |
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/staging && docker compose down && docker compose -f docker-compose.staging.yml up -d --build"
+
       - name: Cleanup .env file
         run: rm .env
 
       - name: Cleanup docker-compose.staging.yml file
         run: rm docker-compose.staging.yml
-
-      - name: SSH and Run Docker Compose
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.LINODE_HOST }}
-          username: ${{ secrets.LINODE_USERNAME }}
-          key: ${{ secrets.LINODE_SSH_KEY }}
-          script: |
-            cd /mereb/staging
-            docker compose down
-            docker compose -f docker-compose.staging.yml up -d --build
 
   test:
     runs-on: ubuntu-latest
