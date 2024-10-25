@@ -1,0 +1,86 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      - name: Set up Python and Install BuildDeck
+        uses: rmhy-tech/setup-builddeck@v1.0.1
+        with:
+          python-version: '3.9'
+
+      - name: Test and Verify project
+        run: builddeck --env=dev mvn-verify
+        shell: bash
+
+  merge-to-staging:
+    needs: test-build
+    runs-on: ubuntu-latest
+    if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge to staging
+        run: |
+          git fetch origin
+          git checkout staging
+          git merge ${{ github.ref_name }} --no-ff
+          git push origin staging
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test-build, merge-to-staging]
+    if: always()
+
+    steps:
+      - name: Send Telegram message on PR creation and merge success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode="HTML" \
+            -d text="✅ <strong>CI Success!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
+          <b>Repository:</b> <code>${{ github.repository }}</code>
+          <b>Branch:</b> <code>${{ github.ref_name }}</code>
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
+
+      - name: Send Slack notification on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode="HTML" \
+            -d text="❌ <strong>CI Failed!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
+          <b>Repository:</b> <code>${{ github.repository }}</code>
+          <b>Branch:</b> <code>${{ github.ref_name }}</code>
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
