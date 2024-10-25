@@ -67,13 +67,11 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="✅ <strong>Success!</strong>
-          <blockquote>
-          <b>Workflow:</b> <b>${{ github.workflow }}</b>
+            -d text="✅ <strong>CI Success!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
           <b>Repository:</b> <code>${{ github.repository }}</code>
           <b>Branch:</b> <code>${{ github.ref_name }}</code>
-          <b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a>
-          </blockquote>"
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
 
       - name: Send Slack notification on failure
         if: failure()
@@ -81,4 +79,8 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="❌ <strong>Failed!</strong><blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b> \n<b>Repository:</b> <code>${{ github.repository }}</code> \n<b>Branch:</b> <code>${{ github.ref_name }}</code> \n<b>Author:</b> <a href='https://github.com/${{ github.actor }}'>${{ github.actor }}</a></blockquote>"
+            -d text="❌ <strong>CI Failed!</strong>
+          <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
+          <b>Repository:</b> <code>${{ github.repository }}</code>
+          <b>Branch:</b> <code>${{ github.ref_name }}</code>
+          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
