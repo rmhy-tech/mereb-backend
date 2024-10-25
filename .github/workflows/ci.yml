@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
@@ -48,6 +50,7 @@ jobs:
 
       - name: Merge to staging
         run: |
+          git fetch origin
           git checkout staging
           git merge ${{ github.ref_name }} --no-ff
           git push origin staging
