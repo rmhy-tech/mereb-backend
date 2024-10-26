@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v3/auth")
+@RequestMapping("/api/v3/auth")
 @RequiredArgsConstructor
 public class AuthControllerV3 {
 

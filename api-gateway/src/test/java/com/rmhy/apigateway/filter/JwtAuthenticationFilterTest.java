@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -68,6 +69,7 @@ public class JwtAuthenticationFilterTest {
         // Arrange
         String token = createToken(60000);  // Token valid for 60 seconds
         when(request.getHeaders()).thenReturn(HttpHeaders.writableHttpHeaders(new HttpHeaders()));
+        when(exchange.getRequest().getMethod()).thenReturn(HttpMethod.GET);
         exchange.getRequest().getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
         when(chain.filter(exchange)).thenReturn(Mono.empty());
 
@@ -82,6 +84,7 @@ public class JwtAuthenticationFilterTest {
     public void testExpiredToken() {
         // Arrange
         String token = createToken(-60000);  // Expired token (expired 60 seconds ago)
+        when(exchange.getRequest().getMethod()).thenReturn(HttpMethod.GET);
         when(request.getHeaders()).thenReturn(HttpHeaders.writableHttpHeaders(new HttpHeaders()));
         exchange.getRequest().getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
 
@@ -101,6 +104,7 @@ public class JwtAuthenticationFilterTest {
         // Arrange
         when(request.getHeaders()).thenReturn(HttpHeaders.writableHttpHeaders(new HttpHeaders()));
 //        when(response.setStatusCode(HttpStatus.UNAUTHORIZED)).thenReturn(response);
+        when(exchange.getRequest().getMethod()).thenReturn(HttpMethod.GET);
         when(response.setComplete()).thenReturn(Mono.empty());
 
         // Act
@@ -119,6 +123,7 @@ public class JwtAuthenticationFilterTest {
         exchange.getRequest().getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + invalidToken);
 //        when(response.setStatusCode(HttpStatus.UNAUTHORIZED)).thenReturn(response);
         when(response.setComplete()).thenReturn(Mono.empty());
+        when(exchange.getRequest().getMethod()).thenReturn(HttpMethod.GET);
 
         // Act
         Mono<Void> result = jwtAuthenticationFilter.filter(exchange, chain);

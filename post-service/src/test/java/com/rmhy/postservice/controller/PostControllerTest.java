@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rmhy.postservice.dto.PostRequest;
 import com.rmhy.postservice.dto.PostResponse;
 import com.rmhy.postservice.exception.PostNotFoundException;
-import com.rmhy.postservice.model.Post;
 import com.rmhy.postservice.service.PostService;
 import com.rmhy.postservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -75,6 +74,30 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty());
 
         verify(postService, times(1)).create(any(PostRequest.class), anyString());
+    }
+
+    @Test
+    public void testGetPostByPostId() throws Exception {
+        PostResponse response = new PostResponse();
+        response.setId(2L);
+        response.setUserId(1L);
+        response.setUsername("test_user");
+        response.setContent("Controller test content");
+        response.setCreatedAt(ZonedDateTime.now());
+        response.setUpdatedAt(ZonedDateTime.now());
+
+        when(postService.getPostByPostId(2L)).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/posts/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(response.getId().toString()))
+                .andExpect(jsonPath("$.userId").value(response.getUserId().toString()))
+                .andExpect(jsonPath("$.username").value(response.getUsername()))
+                .andExpect(jsonPath("$.content").value(response.getContent()))
+                .andExpect(jsonPath("$.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.updatedAt").isNotEmpty());
+
+        verify(postService, times(1)).getPostByPostId(2L);
     }
 
     @Test

@@ -1,10 +1,10 @@
-name: CD Pipeline
+name: Deploy to production
 
 on:
-  push:
+  pull_request:
     branches:
-      - staging
-  workflow_dispatch:
+      - main
+      
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -33,10 +33,10 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          builddeck --env=staging build
+          builddeck --env=prod build
 
       - name: Generate docker-compose.yml
-        run: builddeck --env=staging compose
+        run: builddeck --env=prod compose
 
       - name: Create SSH key file
         run: |
@@ -51,7 +51,7 @@ jobs:
 
       - name: Copy file using scp directly
         run: |
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.staging.yml root@${{ secrets.LINODE_HOST }}:/mereb/staging
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no docker-compose.yml root@${{ secrets.LINODE_HOST }}:/mereb/prod
 
       - name: Create .env file
         run: |
@@ -65,22 +65,34 @@ jobs:
 
       - name: Copy .env to Linode instance
         run: |
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/staging
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no .env root@${{ secrets.LINODE_HOST }}:/mereb/prod
 
       - name: Verify file transfer to Linode instance
         run: |
-          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/staging/docker-compose.staging.yml"
-          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/staging/.env"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/prod/docker-compose.yml"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "ls -la /mereb/prod/.env"
 
       - name: Run Docker Compose commands on Linode instance
         run: |
-          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/staging && docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml up -d --build"
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no root@${{ secrets.LINODE_HOST }} "cd /mereb/prod && docker compose -f docker-compose.yml down && docker compose -f docker-compose.yml up -d --build"
+
 
       - name: Cleanup .env file
         run: rm .env
 
-      - name: Cleanup docker-compose.staging.yml file
-        run: rm docker-compose.staging.yml
+      - name: Cleanup docker-compose.yml file
+        run: rm docker-compose.yml
+
+      - name: SSH and Run Docker Compose
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.LINODE_HOST }}
+          username: ${{ secrets.LINODE_USERNAME }}
+          key: ${{ secrets.LINODE_SSH_KEY }}
+          script: |
+            cd /mereb/prod
+            docker compose down
+            docker compose -f docker-compose.yml up -d --build
 
   test:
     runs-on: ubuntu-latest
@@ -94,10 +106,10 @@ jobs:
             key: ${{ secrets.LINODE_SSH_KEY }}
             script: |
               echo "Checking health status for all services..."
-              cd /mereb/staging || { echo "Failed to change directory"; exit 1; }
+              cd /mereb/prod || { echo "Failed to change directory"; exit 1; }
 
               # Specify the custom Docker Compose file name
-              COMPOSE_FILE="docker-compose.staging.yml"
+              COMPOSE_FILE="docker-compose.yml"
 
               # Check if the specified Docker Compose file exists
               if [ ! -f "$COMPOSE_FILE" ]; then
@@ -107,17 +119,16 @@ jobs:
 
               services=$(docker compose -f "$COMPOSE_FILE" config --services)
               for service in $services; do
-                service_name="${service}-staging"
                 for i in {1..10}; do
-                  if [ "$(docker inspect --format='{{.State.Health.Status}}' $service_name)" == "healthy" ]; then
-                    echo "$service_name is healthy!"
+                  if [ "$(docker inspect --format='{{.State.Health.Status}}' $service)" == "healthy" ]; then
+                    echo "$service is healthy!"
                     break
                   fi
                   if [ "$i" -eq 10 ]; then
-                    echo "$service_name did not become healthy in time."
+                    echo "$service did not become healthy in time."
                     exit 1
                   fi
-                  echo "Waiting for $service_name to be healthy..."
+                  echo "Waiting for $service to be healthy..."
                   sleep 10
                 done
               done
@@ -129,7 +140,7 @@ jobs:
           run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
         - name: Run API tests
           run: |
-            postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-7b54430b-cf05-42a3-819b-568a882124bb"
+            postman collection run "9308902-0a694884-e0dd-456c-a196-d33fb747b4fa" -e "9308902-2f7ffbfa-ea7c-4bb8-aa2f-83b5ec46f1f3"
 
   notify:
     runs-on: ubuntu-latest
@@ -143,11 +154,12 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="✅ <strong>CD Success!</strong>
+            -d text="✅ <strong>Production Deployed!</strong>
           <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
           <b>Repository:</b> <code>${{ github.repository }}</code>
           <b>Branch:</b> <code>${{ github.ref_name }}</code>
-          <b>Author:</b> <code>${{ github.actor }}</code></blockquote>"
+          <b>Author:</b> <code>${{ github.actor }}</code>
+          <b>API URL:</b> <a href="https://api.mereb.app">Mereb API</a></blockquote>"
 
       - name: Send Slack notification on failure
         if: failure()
@@ -155,7 +167,7 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode="HTML" \
-            -d text="❌ <strong>CD Failed!</strong>
+            -d text="❌ <strong>Production Deployment Failed!</strong>
           <blockquote><b>Workflow:</b> <b>${{ github.workflow }}</b>
           <b>Repository:</b> <code>${{ github.repository }}</code>
           <b>Branch:</b> <code>${{ github.ref_name }}</code>

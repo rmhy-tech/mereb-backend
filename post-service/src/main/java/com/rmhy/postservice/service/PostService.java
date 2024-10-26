@@ -40,6 +40,11 @@ public class PostService {
         return postMapper.toDto(savedPost);
     }
 
+    public PostResponse getPostByPostId(Long postId) {
+        Post foundPost = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post with ID " + postId + " not found!"));
+        return postMapper.toDto(foundPost);
+    }
+
     public Page<PostResponse> getPostsByUser(Long userId, int page, int size, String sortBy, String sortDirection) {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
 
