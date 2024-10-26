@@ -58,7 +58,6 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     needs: [test-build, merge-to-staging]
-    if: always()
 
     steps:
       - name: Send Telegram message on PR creation and merge success
