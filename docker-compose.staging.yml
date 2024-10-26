@@ -3,10 +3,10 @@ networks:
     driver: bridge
 services:
   api-gateway:
-    container_name: api-gateway-development
+    container_name: api-gateway-staging
     environment:
     - SPRING_PROFILES_ACTIVE=dev
-    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app
     - USER_SERVICE_URL=http://user-service:8082
     - POST_SERVICE_URL=http://post-service:8083
     healthcheck:
@@ -17,17 +17,18 @@ services:
       - CMD-SHELL
       - curl -f http://localhost:8084/actuator/health || exit 1
       timeout: 10s
-    image: leultewolde/api-gateway:development-latest
+    image: leultewolde/api-gateway:staging-latest
     networks:
     - mereb_app-network
     ports:
-    - 8084:8084
+    - 7084:8084
   post-service:
-    container_name: post-service-development
+    container_name: post-service-staging
+    env_file: .env.staging
     environment:
-    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app
     - USER_SERVICE_GET_USER_URL=http://user-service:8082/api/v2/users
-    - SPRING_PROFILES_ACTIVE=test
+    - SPRING_PROFILES_ACTIVE=staging
     healthcheck:
       interval: 30s
       retries: 3
@@ -36,16 +37,17 @@ services:
       - CMD-SHELL
       - curl -f http://localhost:8083/actuator/health || exit 1
       timeout: 10s
-    image: leultewolde/post-service:development-latest
+    image: leultewolde/post-service:staging-latest
     networks:
     - mereb_app-network
     ports:
-    - 8083:8083
+    - 7083:8083
   user-service:
-    container_name: user-service-development
+    container_name: user-service-staging
+    env_file: .env.staging
     environment:
-    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
-    - SPRING_PROFILES_ACTIVE=test
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app
+    - SPRING_PROFILES_ACTIVE=staging
     healthcheck:
       interval: 30s
       retries: 3
@@ -54,8 +56,8 @@ services:
       - CMD-SHELL
       - curl -f http://localhost:8082/actuator/health || exit 1
       timeout: 10s
-    image: leultewolde/user-service:development-latest
+    image: leultewolde/user-service:staging-latest
     networks:
     - mereb_app-network
     ports:
-    - 8082:8082
+    - 7082:8082

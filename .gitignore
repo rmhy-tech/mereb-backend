@@ -7,5 +7,6 @@ desktop.ini
 /.idea
 /build-deck/services.yml
 .env.api
-
+.env.staging
+.env
 /helpers/__pycache__
