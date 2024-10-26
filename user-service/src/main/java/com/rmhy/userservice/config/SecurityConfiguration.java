@@ -23,8 +23,8 @@ public class SecurityConfiguration {
     private final JwtFilter jwtFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    @Value("${CORS_ALLOWED_ORIGINS:${cors.allowed.origins}}")
-    private String allowedOrigins;
+//    @Value("${CORS_ALLOWED_ORIGINS:${cors.allowed.origins}}")
+//    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
