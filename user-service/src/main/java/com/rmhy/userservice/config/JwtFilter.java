@@ -23,7 +23,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        System.out.println("+++++++REACHES HERE - doFilterInternal");
         if (HttpMethod.OPTIONS.name().equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -50,8 +49,6 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        // Exclude only the authentication endpoints, not the user endpoints
-        System.out.println("+++++++REACHES HERE - shouldNotFilter");
-        return request.getServletPath().contains("auth") || request.getServletPath().contains("api/v3/auth");
+        return request.getServletPath().contains("auth") || request.getServletPath().contains("api/v3/auth") || request.getServletPath().contains("actuator");
     }
 }
