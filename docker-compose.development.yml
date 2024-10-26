@@ -6,6 +6,7 @@ services:
     container_name: api-gateway-development
     environment:
     - SPRING_PROFILES_ACTIVE=dev
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
     - USER_SERVICE_URL=http://user-service:8082
     - POST_SERVICE_URL=http://post-service:8083
     healthcheck:
@@ -24,7 +25,7 @@ services:
   post-service:
     container_name: post-service-development
     environment:
-    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
     - USER_SERVICE_GET_USER_URL=http://user-service:8082/api/v2/users
     - SPRING_PROFILES_ACTIVE=test
     healthcheck:
@@ -43,7 +44,7 @@ services:
   user-service:
     container_name: user-service-development
     environment:
-    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app
+    - CORS_ALLOWED_ORIGINS=http://localhost:8084,http://localhost:5173,http://192.168.1.109:8085,https://mereb.app,https://staging.mereb.app,https://api.staging.mereb.app
     - SPRING_PROFILES_ACTIVE=test
     healthcheck:
       interval: 30s

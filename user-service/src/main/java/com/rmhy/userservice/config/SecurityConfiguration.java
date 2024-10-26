@@ -1,7 +1,6 @@
 package com.rmhy.userservice.config;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,7 +27,6 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        System.out.println("+++++++REACHES HERE - securityFilterChain");
         return httpSecurity
                 .csrf(CsrfConfigurer::disable)
 //                .cors(Customizer.withDefaults())
