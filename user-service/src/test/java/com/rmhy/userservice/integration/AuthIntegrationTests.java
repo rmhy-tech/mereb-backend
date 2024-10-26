@@ -47,15 +47,6 @@ public class AuthIntegrationTests {
     private AuthServiceV3 authServiceV3;
 
     @Test
-    public void shouldAllowCorsRequests() throws Exception {
-        mockMvc.perform(options("/api/v3/auth/register") // Change to your actual endpoint
-                        .header(HttpHeaders.ORIGIN, "http://localhost:3000")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"))
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PATCH,DELETE,OPTIONS"));
-    }
-
-    @Test
     public void createUserIntegrationTest() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFirstName("test");

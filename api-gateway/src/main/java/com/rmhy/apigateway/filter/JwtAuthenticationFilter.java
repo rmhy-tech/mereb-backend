@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -38,12 +39,16 @@ public class JwtAuthenticationFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Skip JWT filter for public routes
-        if (isPublicRoute(path)) {
+        String method = exchange.getRequest().getMethod().name();
+
+        if (HttpMethod.OPTIONS.matches(method) || isPublicRoute(path)) {
             return chain.filter(exchange);
         }
 
-        String token = extractToken(exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+        String token = extractToken(authHeader);
+
         if (token != null && validateToken(token)) {
             return chain.filter(exchange);  // Continue if token is valid
         } else {
