@@ -20,7 +20,7 @@ jobs:
             pip install builddeck
       - run:
           name: Test and Verify Project
-          command: builddeck --env=dev mvn-verify
+          command: builddeck --env=dev verify
 
   merge-to-staging:
     docker:
