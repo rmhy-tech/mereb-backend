@@ -1,7 +1,7 @@
-version: '2.1'
+version: 2.1
 
 orbs:
-  slack: circleci/slack@4.1
+  slack: circleci/slack@5
 
 jobs:
   test-build:
@@ -100,7 +100,6 @@ jobs:
                 }
               ]
             }
-          color: '#FF0000'  # Red for failure
 
       - slack/notify:
           event: pass
@@ -133,8 +132,6 @@ jobs:
                   ]
                 }
               ]
-            }
-          color: '#36A64F'  # Green for success
 
 workflows:
   ci_pipeline:
