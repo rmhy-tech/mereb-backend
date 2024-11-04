@@ -1,0 +1,154 @@
+version: '2.1'
+
+orbs:
+  slack: circleci/slack@4.1
+
+jobs:
+  test-build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Set up JDK 17 and Python
+          command: |
+            sudo apt update
+            sudo apt install -y openjdk-17-jdk
+            echo 'export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"' >> $BASH_ENV
+            source $BASH_ENV
+            python3 --version
+            pip install builddeck
+      - run:
+          name: Test and Verify Project
+          command: builddeck --env=dev verify
+
+  merge-to-staging:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Set up Git
+          command: |
+            git config --global user.name "circleci-bot"
+            git config --global user.email "circleci-bot@users.noreply.circleci.com"
+      - run:
+          name: Merge to Staging
+          command: |
+            git fetch origin
+            git checkout staging
+            git merge $CIRCLE_BRANCH --no-ff
+            git push origin staging
+
+  notify:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Send Telegram Notification on Success
+          when: on_success
+          command: |
+            curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
+              -d chat_id=${TELEGRAM_CHAT_ID} \
+              -d parse_mode="HTML" \
+              -d text="✅ <strong>CI Success!</strong><blockquote><b>Workflow:</b> <b>CircleCI</b>
+              <b>Repository:</b> <code>${CIRCLE_PROJECT_REPONAME}</code>
+              <b>Branch:</b> <code>${CIRCLE_BRANCH}</code>
+              <b>Author:</b> <code>${CIRCLE_USERNAME}</code></blockquote>"
+
+      - run:
+          name: Send Telegram Notification on Failure
+          when: on_fail
+          command: |
+            curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
+              -d chat_id=${TELEGRAM_CHAT_ID} \
+              -d parse_mode="HTML" \
+              -d text="❌ <strong>CI Failed!</strong><blockquote><b>Workflow:</b> <b>CircleCI</b>
+              <b>Repository:</b> <code>${CIRCLE_PROJECT_REPONAME}</code>
+              <b>Branch:</b> <code>${CIRCLE_BRANCH}</code>
+              <b>Author:</b> <code>${CIRCLE_USERNAME}</code></blockquote>"
+
+      - slack/notify:
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:* :x: CI Failed"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:* CircleCI"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:* `${CIRCLE_PROJECT_REPONAME}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:* `${CIRCLE_BRANCH}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:* `${CIRCLE_USERNAME}`"
+                    }
+                  ]
+                }
+              ]
+            }
+          color: '#FF0000'  # Red for failure
+
+      - slack/notify:
+          event: pass
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:* :white_check_mark: CI Success"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:* CircleCI"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:* `${CIRCLE_PROJECT_REPONAME}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:* `${CIRCLE_BRANCH}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:* `${CIRCLE_USERNAME}`"
+                    }
+                  ]
+                }
+              ]
+            }
+          color: '#36A64F'  # Green for success
+
+workflows:
+  ci_pipeline:
+    jobs:
+      - test-build
+      - merge-to-staging:
+          requires:
+            - test-build
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - notify:
+          requires:
+            - test-build
+            - merge-to-staging
